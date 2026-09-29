@@ -5,7 +5,7 @@ import NoResultados from "../Components/Layout/NoResultados";
 import Inicio from "../Moduls/Inicio/Inicio";
 
 
-const ManagerRoutes = () => {
+const ConsultorRoutes = () => {
   return (
     <Routes>
       <Route path="/Inicio" element={<Inicio />} />
@@ -16,4 +16,4 @@ const ManagerRoutes = () => {
   );
 };
 
-export default ManagerRoutes;
+export default ConsultorRoutes;

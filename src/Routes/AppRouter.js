@@ -10,7 +10,7 @@ import AuthContext from "../Context/Auth/AuthContext";
 import LoadingComponent from "../Components/Loading/LoadingComponent";
 import SuperAdminRoutes from "./SuperAdminRoutes";
 import AdminRoutes from "./AdminRoutes";
-import ManagerRoutes from "./ManagerRoutes";
+import ConsultorRoutes from "./ConsultorRoutes";
 
 const AppRouter = () => {
   const { authenticated, AuthenticatedUser, loading, loginExterno, errorAuth } =
@@ -52,7 +52,7 @@ const AppRouter = () => {
   let PrivateComponent = null;
   if (role_id === "1" || role_id === "1") PrivateComponent = SuperAdminRoutes;
   if (role_id === "2" || role_id === "2") PrivateComponent = AdminRoutes;
-  if (role_id === "3" || role_id === "3") PrivateComponent = ManagerRoutes;
+  if (role_id === "3" || role_id === "3") PrivateComponent = ConsultorRoutes;
 
   return (
     <Router>

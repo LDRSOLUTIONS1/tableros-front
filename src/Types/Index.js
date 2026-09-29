@@ -20,7 +20,18 @@ export const ADD_MODULOS = "ADD_MODULOS";
 export const SHOW_MODULOS = "SHOW_MODULOS";
 export const EDIT_MODULOS = "EDIT_MODULOS";
 
+//Categorias
+export const GET_CATEGORIAS = "GET_CATEGORIAS";
+export const ADD_CATEGORIAS = "ADD_CATEGORIAS";
+export const SHOW_CATEGORIAS = "SHOW_CATEGORIAS";
+export const EDIT_CATEGORIAS = "EDIT_CATEGORIAS";
+
+//Tableros
+export const GET_TABLEROS = "GET_TABLEROS";
+export const ADD_TABLEROS = "ADD_TABLEROS";
+export const SHOW_TABLEROS = "SHOW_TABLEROS";
+export const EDIT_TABLEROS = "EDIT_TABLEROS";
+
 //Logs
 export const GET_LOGS = "GET_LOGS";
 export const SHOW_LOGS = "SHOW_LOGS";
-

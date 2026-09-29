@@ -11,6 +11,8 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import GroupIcon from "@mui/icons-material/Group";
 import SecurityIcon from "@mui/icons-material/Security";
 import HistoryIcon from "@mui/icons-material/History";
+import CategoryIcon from "@mui/icons-material/Category";
+import TableRowsIcon from "@mui/icons-material/TableRows";
 
 const theme = createTheme({
   cssVariables: {
@@ -25,6 +27,18 @@ const MODULOS = [
     segment: "Inicio",
     title: "Inicio",
     icon: <DashboardIcon />,
+  },
+  {
+    id: 5,
+    segment: "Categorías",
+    title: "Categorías",
+    icon: <CategoryIcon />,
+  },
+  {
+    id: 6,
+    segment: "Tableros",
+    title: "Tableros",
+    icon: <TableRowsIcon />,
   },
   {
     id: 2,

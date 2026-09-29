@@ -19,7 +19,7 @@ export const tienePermisoMenu = (role_id, permiso) => {
 };
 
 const PERMISOS_POR_ROL_MENU = {
-  1: [1, 2, 3, 4], // SUPER_ADMIN 
-  2: [1, 2, 3, 4], // ADMINISTRADOR
-  3: [1, 2, 3, 4], // MANAGER
+  1: [1, 2, 3, 4, 5, 6], // SUPER_ADMIN 
+  2: [1, 2, 3, 4, 5, 6], // ADMINISTRADOR
+  3: [1, 2, 3, 4, 5, 6], // CONSULTOR
 };

@@ -4,7 +4,6 @@ import { Routes, Route } from "react-router-dom";
 import NoResultados from "../Components/Layout/NoResultados";
 import Inicio from "../Moduls/Inicio/Inicio";
 
-
 const AdminRoutes = () => {
   return (
     <Routes>

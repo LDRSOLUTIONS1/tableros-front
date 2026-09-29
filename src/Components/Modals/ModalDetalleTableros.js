@@ -21,11 +21,11 @@ import CloseIcon from "@mui/icons-material/Close";
 import { dateFormatter } from "../../Utils/dateFormatter";
 import { EstadoChip } from "../../Utils/EstadoChip";
 
-const ModalDetalleUsuarios = ({ open, handleClose, usuario }) => {
+const ModalDetalleTableros = ({ open, handleClose, tablero }) => {
   const theme = useTheme();
   const [value, setValue] = useState(0);
 
-  if (!usuario) return null;
+  if (!tablero) return null;
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -55,7 +55,7 @@ const ModalDetalleUsuarios = ({ open, handleClose, usuario }) => {
           alignItems="center"
         >
           <Typography variant="h6" fontWeight={700}>
-            Detalle del usuario
+            Detalle de la categoría
           </Typography>
 
           <IconButton onClick={handleClose}>
@@ -102,21 +102,19 @@ const ModalDetalleUsuarios = ({ open, handleClose, usuario }) => {
           <Table>
             <TableBody>
               {[
-                { label: "Id", value: usuario.id },
-                {
-                  label: "Número de colaborador",
-                  value: usuario.collaborator_number,
-                },
-                { label: "Nombre", value: usuario.name },
-                { label: "Correo", value: usuario.email },
-                { label: "Rol", value: usuario.role?.name ?? "N/A" },
+                { label: "Id", value: tablero.id },
+                { label: "Categoría", value: tablero.category?.nombre },
+                { label: "Nombre", value: tablero.nombre },
+                { label: "Descripción", value: tablero.descripcion },
+                { label: "URL", value: tablero.url },
+                { label: "Fuente", value: tablero.fuente },
                 {
                   label: "Creado en",
-                  value: dateFormatter(usuario.created_at),
+                  value: dateFormatter(tablero.created_at),
                 },
                 {
                   label: "Estatus",
-                  value: <EstadoChip estado={usuario.estado} />,
+                  value: <EstadoChip estado={tablero.estado} />,
                 },
               ].map((row, index) => (
                 <TableRow
@@ -154,4 +152,4 @@ const ModalDetalleUsuarios = ({ open, handleClose, usuario }) => {
   );
 };
 
-export default ModalDetalleUsuarios;
+export default ModalDetalleTableros;
