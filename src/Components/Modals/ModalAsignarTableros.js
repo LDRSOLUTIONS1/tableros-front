@@ -9,12 +9,13 @@ import { useEffect, useContext, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Grid, MenuItem } from "@mui/material";
 import MethodGet from "../../Config/Service";
-import TablerosContext from "../../Context/Tableros/TablerosContext";
+import UsuariosContext from "../../Context/Usuarios/UsuariosContext";
 
-export default function EditTableros({ open, handleClose, id, categorias }) {
-  const { EditTableros } = useContext(TablerosContext);
+export default function ModalAsignarTableros({ open, handleClose, id, roles, rows }) {
+  const { EditUsuarios } = useContext(UsuariosContext);
 
-  const [tablero, setTablero] = useState(null);
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const {
     control,
@@ -22,13 +23,14 @@ export default function EditTableros({ open, handleClose, id, categorias }) {
     formState: { errors },
     handleSubmit,
     reset,
+    watch,
   } = useForm({
     defaultValues: {
-      category_id: "",
-      nombre: "",
-      descripcion: "",
-      url: "",
-      fuente: "",
+      external_rh_id: "",
+      name: "",
+      email: "",
+      role_id: "",
+      segment_id: "",
       estado: "",
     },
   });
@@ -36,38 +38,46 @@ export default function EditTableros({ open, handleClose, id, categorias }) {
   useEffect(() => {
     if (!id) return;
 
-    MethodGet(`/tableros/${id}`)
+    MethodGet(`/usuarios/${id}`)
       .then((res) => {
-        setTablero(res.data);
+        setUserData(res.data);
       })
       .catch(console.log);
   }, [id]);
 
   useEffect(() => {
-    if (tablero) {
+    if (userData) {
       reset({
-        category_id: tablero.category_id || "",
-        nombre: tablero.nombre || "",
-        descripcion: tablero.descripcion || "",
-        url: tablero.url || "",
-        fuente: tablero.fuente || "",
-        estado: tablero.estado || "",
+        collaborator_number: userData.collaborator_number || "",
+        name: userData.name || "",
+        email: userData.email || "",
+        role_id: userData.role_id || "",
+        segment_id: userData.segment_id || "",
+        estado: userData.estado || "",
       });
     }
-  }, [tablero, reset]);
+  }, [userData, reset]);
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     const payload = {
       ...data,
       id,
     };
 
-    EditTableros(payload);
-    handleClose();
+    try {
+      setLoading(true);
+      await EditUsuarios(payload);
+      handleDialogClose();
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDialogClose = () => {
     reset();
+    setUserData(null);
     handleClose();
   };
 
@@ -76,9 +86,10 @@ export default function EditTableros({ open, handleClose, id, categorias }) {
     { id: 2, nombre: "Activo" },
   ];
 
+  const selectedRole = watch("role_id");
   return (
     <Dialog open={open} onClose={handleDialogClose} fullWidth maxWidth="sm">
-      <DialogTitle>Editar Tablero</DialogTitle>
+      <DialogTitle>Editar usuario</DialogTitle>
 
       <form
         onSubmit={handleSubmit(onSubmit)}
@@ -92,94 +103,76 @@ export default function EditTableros({ open, handleClose, id, categorias }) {
         <DialogContent>
           <Grid container spacing={2}>
             <Grid size={12}>
-              <Controller
-                name="category_id"
-                control={control}
-                rules={{
+              <TextField
+                type="number"
+                fullWidth
+                label="Número de colaborador"
+                InputLabelProps={{ shrink: true }}
+                {...register("collaborator_number", {
                   required: "Este campo es obligatorio",
-                }}
+                  minLength: { value: 1, message: "Mínimo 1 carácter" },
+                  maxLength: { value: 100, message: "Máximo 100 caracteres" },
+                })}
+                error={!!errors.collaborator_number}
+                helperText={errors.collaborator_number?.message}
+              />
+            </Grid>
+            <Grid size={12}>
+              <TextField
+                fullWidth
+                label="Nombre del usuario"
+                InputLabelProps={{ shrink: true }}
+                {...register("name", {
+                  required: "Este campo es obligatorio",
+                  maxLength: {
+                    value: 100,
+                    message: "Máximo 100 caracteres",
+                  },
+                })}
+                error={!!errors.name}
+                helperText={errors.name?.message}
+              />
+            </Grid>
+            <Grid size={12}>
+              <TextField
+                type="email"
+                fullWidth
+                label="Correo electrónico"
+                InputLabelProps={{ shrink: true }}
+                {...register("email", {
+                  required: "Este campo es obligatorio",
+                  minLength: { value: 1, message: "Mínimo 1 carácter" },
+                  maxLength: { value: 100, message: "Máximo 100 caracteres" },
+                })}
+                error={!!errors.email}
+                helperText={errors.email?.message}
+              />
+            </Grid>
+
+            <Grid size={12}>
+              <Controller
+                name="role_id"
+                control={control}
+                rules={{ required: "Debes seleccionar un rol" }}
                 render={({ field }) => (
                   <TextField
                     select
                     fullWidth
-                    label="Selecciona una categoría"
+                    label="Selecciona un rol"
                     {...field}
-                    error={!!errors.category_id}
-                    helperText={errors.category_id?.message}
+                    error={!!errors.role_id}
+                    helperText={errors.role_id?.message}
                   >
                     <MenuItem value="">
-                      <em>-- Seleccionar una opción --</em>
+                      <em>-- Selecciona un rol --</em>
                     </MenuItem>
-
-                    {categorias.map((categoria) => (
-                      <MenuItem key={categoria.id} value={categoria.id}>
-                        {categoria.nombre}
+                    {roles.map((r) => (
+                      <MenuItem key={r.id} value={r.id}>
+                        {r.name}
                       </MenuItem>
                     ))}
                   </TextField>
                 )}
-              />
-            </Grid>
-
-            <Grid size={12}>
-              <TextField
-                fullWidth
-                label="Nombre del Tablero"
-                InputLabelProps={{ shrink: true }}
-                {...register("nombre", {
-                  required: "Este campo es obligatorio",
-                  maxLength: {
-                    value: 100,
-                    message: "Máximo 100 caracteres",
-                  },
-                })}
-                error={!!errors.nombre}
-                helperText={errors.nombre?.message}
-              />
-            </Grid>
-            <Grid size={12}>
-              <TextField
-                fullWidth
-                label="Descripcion"
-                InputLabelProps={{ shrink: true }}
-                {...register("descripcion", {
-                  maxLength: {
-                    value: 100,
-                    message: "Máximo 100 caracteres",
-                  },
-                })}
-                error={!!errors.descripcion}
-                helperText={errors.descripcion?.message}
-              />
-            </Grid>
-            <Grid size={12}>
-              <TextField
-                fullWidth
-                label="Url"
-                InputLabelProps={{ shrink: true }}
-                {...register("url", {
-                  maxLength: {
-                    value: 500,
-                    message: "Máximo 500 caracteres",
-                  },
-                })}
-                error={!!errors.url}
-                helperText={errors.url?.message}
-              />
-            </Grid>
-            <Grid size={12}>
-              <TextField
-                fullWidth
-                label="Fuente"
-                InputLabelProps={{ shrink: true }}
-                {...register("fuente", {
-                  maxLength: {
-                    value: 100,
-                    message: "Máximo 100 caracteres",
-                  },
-                })}
-                error={!!errors.fuente}
-                helperText={errors.fuente?.message}
               />
             </Grid>
 
@@ -218,6 +211,7 @@ export default function EditTableros({ open, handleClose, id, categorias }) {
         <DialogActions>
           <Button
             onClick={handleDialogClose}
+            disabled={loading}
             sx={{
               backgroundColor: "red",
               color: "white",
@@ -231,6 +225,7 @@ export default function EditTableros({ open, handleClose, id, categorias }) {
 
           <Button
             type="submit"
+            disabled={loading}
             sx={{
               backgroundColor: "#1565c0",
               color: "white",
@@ -239,7 +234,7 @@ export default function EditTableros({ open, handleClose, id, categorias }) {
               },
             }}
           >
-            Actualizar
+            {loading ? "Actualizando..." : "Actualizar"}
           </Button>
         </DialogActions>
       </form>

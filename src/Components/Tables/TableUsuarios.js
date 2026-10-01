@@ -198,7 +198,7 @@ export default function TableUsuarios({ rows = [] }) {
                     onClick={handleClickOpenAdd}
                     sx={{ borderRadius: 3 }}
                   >
-                    Nuevo rol
+                    Nuevo usuario
                   </Button>
                 </Box>
               ),

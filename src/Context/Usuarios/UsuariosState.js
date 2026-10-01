@@ -44,9 +44,20 @@ const UsuariosState = ({ children }) => {
     }
     Swal.fire("Error", "Ocurrió un error inesperado", "error");
   };
-  
+
   const GetUsuarios = () => {
     MethodGet("/usuarios")
+      .then((res) => {
+        dispatch({
+          type: GET_USUARIOS,
+          payload: res.data,
+        });
+      })
+      .catch(handleError);
+  };
+
+  const GetUsuariosLimited = () => {
+    MethodGet("/indexLimited")
       .then((res) => {
         dispatch({
           type: GET_USUARIOS,
@@ -103,6 +114,7 @@ const UsuariosState = ({ children }) => {
         ErrorsApi: state.ErrorsApi,
         success: state.success,
         GetUsuarios,
+        GetUsuariosLimited,
         GetUsuario,
         CreateUsuarios,
         EditUsuarios,

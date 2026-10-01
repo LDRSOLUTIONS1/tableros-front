@@ -11,6 +11,7 @@ import LoadingComponent from "../Components/Loading/LoadingComponent";
 import SuperAdminRoutes from "./SuperAdminRoutes";
 import AdminRoutes from "./AdminRoutes";
 import ConsultorRoutes from "./ConsultorRoutes";
+import LimitadoRoutes from "./LimitadoRoutes";
 
 const AppRouter = () => {
   const { authenticated, AuthenticatedUser, loading, loginExterno, errorAuth } =
@@ -52,7 +53,8 @@ const AppRouter = () => {
   let PrivateComponent = null;
   if (role_id === "1" || role_id === "1") PrivateComponent = SuperAdminRoutes;
   if (role_id === "2" || role_id === "2") PrivateComponent = AdminRoutes;
-  if (role_id === "3" || role_id === "3") PrivateComponent = ConsultorRoutes;
+  if (role_id === "3" || role_id === "3") PrivateComponent = LimitadoRoutes;
+  if (role_id === "4" || role_id === "4") PrivateComponent = ConsultorRoutes;
 
   return (
     <Router>

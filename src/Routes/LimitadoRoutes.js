@@ -3,14 +3,12 @@ import { Routes, Route } from "react-router-dom";
 
 import NoResultados from "../Components/Layout/NoResultados";
 import Inicio from "../Moduls/Inicio/Inicio";
-import Categorías from "../Moduls/Categorías/Categorías";
 import Tableros from "../Moduls/Tableros/Tableros";
 
-const ConsultorRoutes = () => {
+const LimitadoRoutes = () => {
   return (
     <Routes>
       <Route path="/Inicio" element={<Inicio />} />
-      <Route path="/Categorías" element={<Categorías />} />
       <Route path="/Tableros" element={<Tableros />} />
 
       <Route path="/no-resultados" element={<NoResultados />} />
@@ -19,4 +17,4 @@ const ConsultorRoutes = () => {
   );
 };
 
-export default ConsultorRoutes;
+export default LimitadoRoutes;

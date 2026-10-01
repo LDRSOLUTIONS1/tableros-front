@@ -12,7 +12,7 @@ import TablerosContext from "../../Context/Tableros/TablerosContext";
 
 export default function AddTableros({ open, handleClose, categorias }) {
   const { CreateTableros } = useContext(TablerosContext);
-
+ 
   const {
     register,
     formState: { errors },
@@ -93,7 +93,7 @@ export default function AddTableros({ open, handleClose, categorias }) {
                 {...register("url", {
                   required: "Este campo es obligatorio",
                   minLength: { value: 1, message: "Mínimo 1 carácter" },
-                  maxLength: { value: 100, message: "Máximo 100 caracteres" },
+                  maxLength: { value: 500, message: "Máximo 500 caracteres" },
                 })}
                 error={!!errors.url}
                 helperText={errors.url?.message}

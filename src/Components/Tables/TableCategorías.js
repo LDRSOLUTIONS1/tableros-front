@@ -17,6 +17,7 @@ export default function TableCategorías({ rows = [] }) {
   const { categoria, GetCategoria } = useContext(CategoríasContext);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const role_id = localStorage.getItem("role_id");
 
   const [openModal, setOpenModal] = useState(false);
 
@@ -64,12 +65,16 @@ export default function TableCategorías({ rows = [] }) {
             label="Ver detalles"
             onClick={() => handleClickOpen(params.id)}
           />,
-          <GridActionsCellItem
-            icon={<EditIcon sx={{ color: "#ed6c02" }} />}
-            label="Editar"
-            onClick={() => handleClickOpenEdit(params.id)}
-          />,
         ];
+        if (role_id !== "4") {
+          actions.push(
+            <GridActionsCellItem
+              icon={<EditIcon sx={{ color: "#ed6c02" }} />}
+              label="Editar"
+              onClick={() => handleClickOpenEdit(params.id)}
+            />,
+          );
+        }
         return actions;
       },
     },
@@ -169,14 +174,16 @@ export default function TableCategorías({ rows = [] }) {
                   }}
                 >
                   <Typography fontWeight={600}>Total: {rows.length}</Typography>
-                  <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={handleClickOpenAdd}
-                    sx={{ borderRadius: 3 }}
-                  >
-                    Nuevo categoría
-                  </Button>
+                  {role_id !== "4" && (
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={handleClickOpenAdd}
+                      sx={{ borderRadius: 3 }}
+                    >
+                      Nuevo categoría
+                    </Button>
+                  )}
                 </Box>
               ),
             }}

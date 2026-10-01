@@ -1,70 +1,31 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Box, Typography, Paper, useTheme, useMediaQuery } from "@mui/material";
-import VisibilityIcon from "@mui/icons-material/Visibility";
 import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
-import ModalDetalleTableros from "../Modals/ModalDetalleTableros";
-import TablerosContext from "../../Context/Tableros/TablerosContext";
-import EditIcon from "@mui/icons-material/Edit";
 import { dateFormatter } from "../../Utils/dateFormatter";
-import EditTableros from "../../Moduls/Tableros/EditTableros";
-import AddIcon from "@mui/icons-material/Add";
-import { Button } from "@mui/material";
-import AddTableros from "../../Moduls/Tableros/AddTableros";
 import { EstadoChip } from "../../Utils/EstadoChip";
 import { esES } from "@mui/x-data-grid/locales";
-import CategoríasContext from "../../Context/Categorías/CategoríasContext";
-import ModalTablero from "../Modals/ModalTablero";
+import RolesContext from "../../Context/Roles/RolesContext";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import ModalAsignarTableros from "../Modals/ModalAsignarTableros";
 
-export default function TableTableros({ rows = [] }) {
-  const { tablero, GetTablero } = useContext(TablerosContext);
+export default function TableUsuariosLimited({ rows = [] }) {
+  const { roles, GetRoles } = useContext(RolesContext);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const [openModal, setOpenModal] = useState(false);
-  const { categorias, GetCategorias } = useContext(CategoríasContext);
-
-  const handleClickOpen = async (id) => {
-    await GetTablero(id);
-    setOpenModal(true);
-  };
-  const handleClose = () => {
-    setOpenModal(false);
-  };
 
   const [modalUpdate, OpenModalUpdate] = useState(false);
-  const [id_tablero, saveIdTablero] = useState(null);
+  const [id_usuario, saveIdUsuario] = useState(null);
   const handleClickOpenEdit = (id) => {
     OpenModalUpdate(true);
-    saveIdTablero(id);
+    saveIdUsuario(id);
   };
   const handleClickCloseEdit = () => {
     OpenModalUpdate(false);
-    saveIdTablero(null);
-  };
-
-  const [modalAdd, setOpenModalAdd] = useState(false);
-  const handleClickOpenAdd = () => {
-    setOpenModalAdd(true);
-  };
-
-  const handleClickCloseAdd = () => {
-    setOpenModalAdd(false);
-  };
-
-  const [openModalReact, setOpenModalReact] = useState(false);
-  const [tableroSeleccionado, setTableroSeleccionado] = useState(null);
-
-  const handleClickOpenReact = (tablero) => {
-    setTableroSeleccionado(tablero);
-    setOpenModalReact(true);
-  };
-
-  const handleCloseReact = () => {
-    setOpenModalReact(false);
-    setTableroSeleccionado(null);
+    saveIdUsuario(null);
   };
 
   useEffect(() => {
-    GetCategorias();
+    GetRoles();
   }, []);
 
   const columns = [
@@ -79,13 +40,8 @@ export default function TableTableros({ rows = [] }) {
       getActions: (params) => {
         const actions = [
           <GridActionsCellItem
-            icon={<VisibilityIcon sx={{ color: "#42A5F5" }} />}
-            label="Ver detalles"
-            onClick={() => handleClickOpen(params.id)}
-          />,
-          <GridActionsCellItem
-            icon={<EditIcon sx={{ color: "#ed6c02" }} />}
-            label="Editar"
+            icon={<AdminPanelSettingsIcon sx={{ color: "#ed6c02" }} />}
+            label="Asignar tableros"
             onClick={() => handleClickOpenEdit(params.id)}
           />,
         ];
@@ -101,69 +57,37 @@ export default function TableTableros({ rows = [] }) {
       minWidth: 100,
     },
     {
-      field: "category",
-      headerName: "Categoría",
-      flex: 1,
-      minWidth: 180,
-      headerAlign: "center",
-      align: "center",
-      valueGetter: (value, row) => row.category?.nombre || "Sin categoría",
-    },
-    {
-      field: "nombre",
-      headerName: "Nombre",
+      field: "collaborator_number",
+      headerName: "Número de colaborador",
       flex: 1,
       align: "center",
       headerAlign: "center",
       minWidth: 100,
     },
     {
-      field: "descripcion",
-      headerName: "Descripción",
+      field: "name",
+      headerName: "Nombre completo",
       flex: 1,
       align: "center",
       headerAlign: "center",
       minWidth: 100,
     },
     {
-      field: "tablero",
-      headerName: "Tablero",
-      flex: 0.7,
-      minWidth: 120,
-      align: "center",
-      headerAlign: "center",
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => (
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<VisibilityIcon />}
-          onClick={() => handleClickOpenReact(params.row)}
-          sx={{
-            borderRadius: 2,
-            textTransform: "none",
-          }}
-        >
-          Ver tablero
-        </Button>
-      ),
-    },
-    {
-      field: "url",
-      headerName: "Url",
+      field: "email",
+      headerName: "Correo electrónico",
       flex: 1,
       align: "center",
       headerAlign: "center",
       minWidth: 100,
     },
     {
-      field: "fuente",
-      headerName: "Fuente",
+      field: "rol",
+      headerName: "Rol",
       flex: 1,
       align: "center",
       headerAlign: "center",
       minWidth: 100,
+      valueGetter: (value, row) => row.role?.name ?? "N/A",
     },
     {
       field: "created_at",
@@ -201,7 +125,7 @@ export default function TableTableros({ rows = [] }) {
         }}
       >
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          Lista de tableros
+          Administración de Tableros
         </Typography>
 
         <Box
@@ -237,14 +161,6 @@ export default function TableTableros({ rows = [] }) {
                   }}
                 >
                   <Typography fontWeight={600}>Total: {rows.length}</Typography>
-                  <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={handleClickOpenAdd}
-                    sx={{ borderRadius: 3 }}
-                  >
-                    Nuevo tablero
-                  </Button>
                 </Box>
               ),
             }}
@@ -294,32 +210,16 @@ export default function TableTableros({ rows = [] }) {
           />
         </Box>
       </Paper>
-      <ModalDetalleTableros
-        open={openModal}
-        handleClose={handleClose}
-        tablero={tablero}
-      />
 
-      {id_tablero !== null && (
-        <EditTableros
+      {id_usuario !== null && (
+        <ModalAsignarTableros
           open={modalUpdate}
           handleClose={handleClickCloseEdit}
-          id={id_tablero}
-          categorias={categorias}
+          id={id_usuario}
+          roles={roles}
+          rows={rows}
         />
       )}
-
-      <AddTableros
-        open={modalAdd}
-        handleClose={handleClickCloseAdd}
-        categorias={categorias}
-      />
-
-      <ModalTablero
-        open={openModalReact}
-        handleClose={handleCloseReact}
-        tablero={tableroSeleccionado}
-      />
     </>
   );
 }
