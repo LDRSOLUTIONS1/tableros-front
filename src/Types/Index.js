@@ -31,6 +31,7 @@ export const GET_TABLEROS = "GET_TABLEROS";
 export const ADD_TABLEROS = "ADD_TABLEROS";
 export const SHOW_TABLEROS = "SHOW_TABLEROS";
 export const EDIT_TABLEROS = "EDIT_TABLEROS";
+export const DASHBOARD_ASSIGN = "DASHBOARD_ASSIGN";
 
 //Logs
 export const GET_LOGS = "GET_LOGS";

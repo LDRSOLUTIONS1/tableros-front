@@ -128,25 +128,32 @@ export default function TableTableros({ rows = [] }) {
     {
       field: "tablero",
       headerName: "Tablero",
-      flex: 0.7,
-      minWidth: 120,
+      flex: 1,
       align: "center",
       headerAlign: "center",
-      sortable: false,
-      filterable: false,
+      minWidth: 100,
       renderCell: (params) => (
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<VisibilityIcon />}
-          onClick={() => handleClickOpenReact(params.row)}
+        <Box
           sx={{
-            borderRadius: 2,
-            textTransform: "none",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 0.5,
+            width: "100%",
+            height: "100%",
           }}
         >
-          Ver tablero
-        </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<VisibilityIcon />}
+            onClick={() => handleClickOpenReact(params.row)}
+            sx={{ borderRadius: 3, textTransform: "none" }}
+          >
+            Ver tablero
+          </Button>
+        </Box>
       ),
     },
     {

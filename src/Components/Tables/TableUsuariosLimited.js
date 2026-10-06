@@ -1,15 +1,13 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Box, Typography, Paper, useTheme, useMediaQuery } from "@mui/material";
 import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
 import { dateFormatter } from "../../Utils/dateFormatter";
 import { EstadoChip } from "../../Utils/EstadoChip";
 import { esES } from "@mui/x-data-grid/locales";
-import RolesContext from "../../Context/Roles/RolesContext";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import ModalAsignarTableros from "../Modals/ModalAsignarTableros";
 
 export default function TableUsuariosLimited({ rows = [] }) {
-  const { roles, GetRoles } = useContext(RolesContext);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
@@ -24,10 +22,6 @@ export default function TableUsuariosLimited({ rows = [] }) {
     saveIdUsuario(null);
   };
 
-  useEffect(() => {
-    GetRoles();
-  }, []);
-
   const columns = [
     {
       field: "actions",
@@ -40,7 +34,7 @@ export default function TableUsuariosLimited({ rows = [] }) {
       getActions: (params) => {
         const actions = [
           <GridActionsCellItem
-            icon={<AdminPanelSettingsIcon sx={{ color: "#ed6c02" }} />}
+            icon={<AdminPanelSettingsIcon sx={{ color: "#4ced02" }} />}
             label="Asignar tableros"
             onClick={() => handleClickOpenEdit(params.id)}
           />,
@@ -216,7 +210,6 @@ export default function TableUsuariosLimited({ rows = [] }) {
           open={modalUpdate}
           handleClose={handleClickCloseEdit}
           id={id_usuario}
-          roles={roles}
           rows={rows}
         />
       )}

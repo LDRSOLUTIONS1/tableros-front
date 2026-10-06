@@ -8,6 +8,7 @@ import {
   ADD_TABLEROS,
   SHOW_TABLEROS,
   EDIT_TABLEROS,
+  DASHBOARD_ASSIGN,
 } from "../../Types/Index";
 import imageHeaders from "../../Config/ImageHeaders";
 
@@ -56,6 +57,17 @@ const TablerosState = ({ children }) => {
       .catch(handleError);
   };
 
+  const GetTablerosName = () => {
+    MethodGet("/indexName")
+      .then((res) => {
+        dispatch({
+          type: GET_TABLEROS,
+          payload: res.data,
+        });
+      })
+      .catch(handleError);
+  };
+
   const GetTablero = (id) => {
     MethodGet(`/tableros/${id}`)
       .then((res) => {
@@ -95,6 +107,22 @@ const TablerosState = ({ children }) => {
       .catch(handleError);
   };
 
+  const DashboardAssign = async (data) => {
+    try {
+      const res = await MethodPost("/dashboard/assign", data);
+      dispatch({ type: DASHBOARD_ASSIGN, payload: res.data });
+      Swal.fire({
+        title: "Éxito",
+        text: "Tableros asignados correctamente",
+        icon: "success",
+      });
+      return true;
+    } catch (error) {
+      handleError(error);
+      return false;
+    }
+  };
+
   return (
     <TablerosContext.Provider
       value={{
@@ -103,9 +131,11 @@ const TablerosState = ({ children }) => {
         ErrorsApi: state.ErrorsApi,
         success: state.success,
         GetTableros,
+        GetTablerosName,
         GetTablero,
         CreateTableros,
         EditTableros,
+        DashboardAssign,
       }}
     >
       {children}
