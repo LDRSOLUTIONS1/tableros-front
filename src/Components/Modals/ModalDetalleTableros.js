@@ -113,6 +113,10 @@ const ModalDetalleTableros = ({ open, handleClose, tablero }) => {
                   value: dateFormatter(tablero.created_at),
                 },
                 {
+                  label: "Actualizado en",
+                  value: dateFormatter(tablero.updated_at),
+                },
+                {
                   label: "Estatus",
                   value: <EstadoChip estado={tablero.estado} />,
                 },

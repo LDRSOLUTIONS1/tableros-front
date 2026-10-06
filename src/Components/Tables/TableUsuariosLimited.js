@@ -6,6 +6,7 @@ import { EstadoChip } from "../../Utils/EstadoChip";
 import { esES } from "@mui/x-data-grid/locales";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import ModalAsignarTableros from "../Modals/ModalAsignarTableros";
+import { Tooltip } from "@mui/material";
 
 export default function TableUsuariosLimited({ rows = [] }) {
   const theme = useTheme();
@@ -42,14 +43,7 @@ export default function TableUsuariosLimited({ rows = [] }) {
         return actions;
       },
     },
-    {
-      field: "id",
-      headerName: "Id",
-      flex: 1,
-      align: "center",
-      headerAlign: "center",
-      minWidth: 100,
-    },
+
     {
       field: "collaborator_number",
       headerName: "Número de colaborador",
@@ -58,44 +52,111 @@ export default function TableUsuariosLimited({ rows = [] }) {
       headerAlign: "center",
       minWidth: 100,
     },
+
     {
       field: "name",
       headerName: "Nombre completo",
-      flex: 1,
+      flex: 1.5,
       align: "center",
       headerAlign: "center",
-      minWidth: 100,
+      minWidth: 180,
     },
+
     {
       field: "email",
       headerName: "Correo electrónico",
-      flex: 1,
+      flex: 1.5,
       align: "center",
       headerAlign: "center",
-      minWidth: 100,
+      minWidth: 180,
     },
+    {
+      field: "empresa",
+      headerName: "Empresa",
+      flex: 1,
+      align: "left",
+      headerAlign: "center",
+      minWidth: 180,
+
+      renderCell: (params) => (
+        <Box sx={{ lineHeight: 1.3 }}>
+          <Typography variant="body2" fontWeight={600}>
+            {params.row.brand ?? "N/A"}
+          </Typography>
+
+          <Typography variant="caption" color="text.secondary">
+            {params.row.location_name ?? "N/A"}
+          </Typography>
+        </Box>
+      ),
+    },
+
+    {
+      field: "puesto_area",
+      headerName: "Puesto / Área",
+      flex: 1.5,
+      align: "left",
+      headerAlign: "center",
+      minWidth: 220,
+
+      renderCell: (params) => (
+        <Box sx={{ lineHeight: 1.3 }}>
+          <Typography variant="body2" fontWeight={600}>
+            {params.row.puesto ?? "N/A"}
+          </Typography>
+
+          <Typography variant="caption" color="text.secondary">
+            {params.row.area ?? "N/A"}
+          </Typography>
+        </Box>
+      ),
+    },
+
     {
       field: "rol",
       headerName: "Rol",
-      flex: 1,
+      flex: 0.8,
       align: "center",
       headerAlign: "center",
       minWidth: 100,
       valueGetter: (value, row) => row.role?.name ?? "N/A",
     },
+
     {
-      field: "created_at",
-      headerName: "Creado en",
+      field: "dashboards",
+      headerName: "Tableros asignados",
       flex: 1,
       align: "center",
       headerAlign: "center",
-      minWidth: 100,
-      renderCell: (params) => dateFormatter(params.value),
+      minWidth: 150,
+
+      renderCell: (params) => {
+        const dashboards = params.row.dashboards ?? [];
+
+        return (
+          <Tooltip
+            title={
+              dashboards.length > 0
+                ? dashboards.map((dashboard) => dashboard.nombre).join(", ")
+                : "Sin tableros asignados"
+            }
+          >
+            <span>
+              {dashboards.length > 0
+                ? `${dashboards.length} ${
+                    dashboards.length === 1 ? "tablero" : "tableros"
+                  }`
+                : "Sin tableros"}
+            </span>
+          </Tooltip>
+        );
+      },
     },
+
     {
       field: "estado",
       headerName: "Estatus",
-      flex: 0.5,
+      flex: 0.7,
       align: "center",
       headerAlign: "center",
       minWidth: 100,

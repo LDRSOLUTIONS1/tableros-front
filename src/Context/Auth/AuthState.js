@@ -43,7 +43,7 @@ const AuthState = (props) => {
       });
   };
 
-  const loginExterno = async (collaborator_number) => {
+  const loginExternoo = async (collaborator_number) => {
     try {
       const { data } = await MethodPost(`/login/${collaborator_number}`);
 
@@ -62,7 +62,7 @@ const AuthState = (props) => {
     }
   };
 
-  const loginExternoo = async () => {
+  const loginExterno = async () => {
     try {
       const { data } = await MethodPost(`/login`);
       localStorage.setItem("token", data.token);

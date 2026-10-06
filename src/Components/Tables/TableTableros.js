@@ -93,14 +93,6 @@ export default function TableTableros({ rows = [] }) {
       },
     },
     {
-      field: "id",
-      headerName: "Id",
-      flex: 1,
-      align: "center",
-      headerAlign: "center",
-      minWidth: 100,
-    },
-    {
       field: "category",
       headerName: "Categoría",
       flex: 1,
@@ -173,8 +165,8 @@ export default function TableTableros({ rows = [] }) {
       minWidth: 100,
     },
     {
-      field: "created_at",
-      headerName: "Creado en",
+      field: "updated_at",
+      headerName: "Actualizado en",
       flex: 1,
       align: "center",
       headerAlign: "center",

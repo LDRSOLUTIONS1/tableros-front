@@ -79,14 +79,6 @@ export default function TableCategorías({ rows = [] }) {
       },
     },
     {
-      field: "id",
-      headerName: "Id",
-      flex: 1,
-      align: "center",
-      headerAlign: "center",
-      minWidth: 100,
-    },
-    {
       field: "nombre",
       headerName: "Categoría",
       flex: 1,
@@ -103,8 +95,8 @@ export default function TableCategorías({ rows = [] }) {
       minWidth: 100,
     },
     {
-      field: "created_at",
-      headerName: "Creado en",
+      field: "updated_at",
+      headerName: "Actualizado en",
       flex: 1,
       align: "center",
       headerAlign: "center",

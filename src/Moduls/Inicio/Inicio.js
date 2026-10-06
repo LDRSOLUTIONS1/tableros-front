@@ -18,19 +18,16 @@ import BadgeIcon from "@mui/icons-material/Badge";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import BusinessIcon from "@mui/icons-material/Business";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
-
 import Layout from "../../Components/Layout/Layout";
 import AuthContext from "../../Context/Auth/AuthContext";
-
-/* -------------------------------------------------------------------------- */
-/* Helpers                                                                    */
-/* -------------------------------------------------------------------------- */
+import WorkIcon from "@mui/icons-material/Work";
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
 
 const ROLES = {
   1: "Super Administrador",
   2: "Administrador",
-  3: "Manager",
-  4: "Visualizador",
+  3: "Limitado",
+  4: "Consultor",
 };
 
 const ESTADO_INACTIVO = 1;
@@ -77,11 +74,13 @@ const getEstado = (estado) => {
   return { label: "Sin definir", color: "default" };
 };
 
-/* -------------------------------------------------------------------------- */
-/* Subcomponentes                                                             */
-/* -------------------------------------------------------------------------- */
-
-const InfoItem = ({ icon: Icon, label, value, fallback = "No disponible", children }) => (
+const InfoItem = ({
+  icon: Icon,
+  label,
+  value,
+  fallback = "No disponible",
+  children,
+}) => (
   <Stack direction="row" spacing={2} alignItems="center" sx={{ minWidth: 0 }}>
     <Avatar
       variant="rounded"
@@ -116,10 +115,6 @@ const InicioSkeleton = () => (
     <Skeleton variant="rounded" height={280} sx={{ borderRadius: 4 }} />
   </>
 );
-
-/* -------------------------------------------------------------------------- */
-/* Página                                                                     */
-/* -------------------------------------------------------------------------- */
 
 const Inicio = () => {
   const { usuario, loading } = useContext(AuthContext);
@@ -158,7 +153,7 @@ const Inicio = () => {
                 bgcolor: (theme) =>
                   alpha(
                     theme.palette.primary.main,
-                    theme.palette.mode === "dark" ? 0.12 : 0.06
+                    theme.palette.mode === "dark" ? 0.12 : 0.06,
                   ),
               }}
             >
@@ -169,7 +164,11 @@ const Inicio = () => {
                 justifyContent="space-between"
               >
                 <Box sx={{ minWidth: 0 }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 0.5 }}
+                  >
                     {fechaHoy}
                   </Typography>
 
@@ -187,11 +186,13 @@ const Inicio = () => {
                     sx={{ maxWidth: 620 }}
                   >
                     Bienvenido al sistema de{" "}
-                    <Box component="span" sx={{ fontWeight: 700, color: "text.primary" }}>
-                      Inteligencia de N 
+                    <Box
+                      component="span"
+                      sx={{ fontWeight: 700, color: "text.primary" }}
+                    >
+                      Inteligencia de Negocios
                     </Box>
-                    . Desde aquí puedes consultar y gestionar la información de
-                    las visitas.
+                    . Desde aquí puedes consultar y gestionar la información.
                   </Typography>
 
                   <Chip
@@ -257,10 +258,16 @@ const Inicio = () => {
 
               <Box sx={{ p: 3 }}>
                 <Grid container spacing={3}>
+                  {/* Nombre */}
                   <Grid item xs={12} sm={6} md={4}>
-                    <InfoItem icon={PersonIcon} label="Nombre" value={user?.name} />
+                    <InfoItem
+                      icon={PersonIcon}
+                      label="Nombre completo"
+                      value={user?.name}
+                    />
                   </Grid>
 
+                  {/* Correo */}
                   <Grid item xs={12} sm={6} md={4}>
                     <InfoItem
                       icon={EmailIcon}
@@ -269,6 +276,7 @@ const Inicio = () => {
                     />
                   </Grid>
 
+                  {/* Número de colaborador */}
                   <Grid item xs={12} sm={6} md={4}>
                     <InfoItem
                       icon={BadgeIcon}
@@ -277,6 +285,17 @@ const Inicio = () => {
                     />
                   </Grid>
 
+                  {/* Marca */}
+                  <Grid item xs={12} sm={6} md={4}>
+                    <InfoItem
+                      icon={BusinessIcon}
+                      label="Marca"
+                      value={user?.brand}
+                      fallback="No asignada"
+                    />
+                  </Grid>
+
+                  {/* Ubicación */}
                   <Grid item xs={12} sm={6} md={4}>
                     <InfoItem
                       icon={LocationOnIcon}
@@ -286,11 +305,22 @@ const Inicio = () => {
                     />
                   </Grid>
 
+                  {/* Puesto */}
                   <Grid item xs={12} sm={6} md={4}>
                     <InfoItem
-                      icon={BusinessIcon}
-                      label="Marca"
-                      value={user?.brand}
+                      icon={WorkIcon}
+                      label="Puesto"
+                      value={user?.puesto}
+                      fallback="No asignado"
+                    />
+                  </Grid>
+
+                  {/* Área */}
+                  <Grid item xs={12} sm={6} md={4}>
+                    <InfoItem
+                      icon={AccountTreeIcon}
+                      label="Área"
+                      value={user?.area}
                       fallback="No asignada"
                     />
                   </Grid>

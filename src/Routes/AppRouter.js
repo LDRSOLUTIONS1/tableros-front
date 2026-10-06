@@ -22,17 +22,17 @@ const AppRouter = () => {
   const collaborator_number = params.get("collaborator_number");
   const [showLoader, setShowLoader] = React.useState(true);
 
-  useEffect(() => {
-    if (collaborator_number) {
-      loginExterno(collaborator_number);
-    } else {
-      AuthenticatedUser();
-    }
-  }, []);
-
   // useEffect(() => {
-  //   loginExterno();
+  //   if (collaborator_number) {
+  //     loginExterno(collaborator_number);
+  //   } else {
+  //     AuthenticatedUser();
+  //   }
   // }, []);
+
+  useEffect(() => {
+    loginExterno();
+  }, []);
 
   useEffect(() => {
     if (!loading) {

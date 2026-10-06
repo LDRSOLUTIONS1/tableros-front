@@ -110,6 +110,10 @@ const ModalDetalleCategorias = ({ open, handleClose, categoria }) => {
                   value: dateFormatter(categoria.created_at),
                 },
                 {
+                  label: "Actualizado en",
+                  value: dateFormatter(categoria.updated_at),
+                },
+                {
                   label: "Estatus",
                   value: <EstadoChip estado={categoria.estado} />,
                 },
