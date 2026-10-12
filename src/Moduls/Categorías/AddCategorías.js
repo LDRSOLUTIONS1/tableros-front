@@ -54,12 +54,12 @@ export default function AddCategorías({ open, handleClose }) {
             <Grid size={12}>
               <TextField
                 fullWidth
-                label="Descripcion"
-                {...register("description", {
+                label="Descripción"
+                {...register("descripcion", {
                   maxLength: { value: 100, message: "Máximo 100 caracteres" },
                 })}
-                error={!!errors.description}
-                helperText={errors.description?.message}
+                error={!!errors.descripcion}
+                helperText={errors.descripcion?.message}
               />
             </Grid>
           </Grid>

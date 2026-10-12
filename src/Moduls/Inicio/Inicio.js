@@ -190,7 +190,7 @@ const Inicio = () => {
                       component="span"
                       sx={{ fontWeight: 700, color: "text.primary" }}
                     >
-                      Inteligencia de Negocios
+                      Inteligencia de Mercado
                     </Box>
                     . Desde aquí puedes consultar y gestionar la información.
                   </Typography>

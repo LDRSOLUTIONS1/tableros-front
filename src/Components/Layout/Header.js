@@ -13,6 +13,7 @@ import SecurityIcon from "@mui/icons-material/Security";
 import HistoryIcon from "@mui/icons-material/History";
 import CategoryIcon from "@mui/icons-material/Category";
 import TableRowsIcon from "@mui/icons-material/TableRows";
+import FileUploadIcon from "@mui/icons-material/FileUpload";
 
 const theme = createTheme({
   cssVariables: {
@@ -45,6 +46,12 @@ const MODULOS = [
     segment: "Administración",
     title: "Administración de tableros",
     icon: <SecurityIcon />,
+  },
+  {
+    id: 8,
+    segment: "Importaciones",
+    title: "Importaciones",
+    icon: <FileUploadIcon />,
   },
   {
     id: 4,
@@ -144,6 +151,6 @@ export default function Header({ children }) {
       <DashboardLayout defaultSidebarCollapsed initialExpandedItems={[]}>
         {children}
       </DashboardLayout>
-    </AppProvider>
+    </AppProvider>  
   );
 }
