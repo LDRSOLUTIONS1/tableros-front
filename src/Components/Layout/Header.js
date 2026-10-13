@@ -31,7 +31,7 @@ const MODULOS = [
   },
   {
     id: 2,
-    segment: "Categorías",
+    segment: "Categorias",
     title: "Categorías",
     icon: <CategoryIcon />,
   },
@@ -43,7 +43,7 @@ const MODULOS = [
   },
   {
     id: 7,
-    segment: "Administración",
+    segment: "Administracion",
     title: "Administración de tableros",
     icon: <SecurityIcon />,
   },

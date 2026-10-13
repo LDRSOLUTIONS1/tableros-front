@@ -6,6 +6,7 @@ import UsuariosState from "./Context/Usuarios/UsuariosState";
 import LogsState from "./Context/Logs/LogsState";
 import CategoríasState from "./Context/Categorías/CategoríasState";
 import TablerosState from "./Context/Tableros/TablerosState";
+import ImportacionesState from "./Context/Importaciones/ImportacionesState";
 
 const AdminApp = () => {
   return (
@@ -15,7 +16,9 @@ const AdminApp = () => {
           <LogsState>
             <CategoríasState>
               <TablerosState>
-                <AppRouter />
+                <ImportacionesState>
+                  <AppRouter />
+                </ImportacionesState>
               </TablerosState>
             </CategoríasState>
           </LogsState>
