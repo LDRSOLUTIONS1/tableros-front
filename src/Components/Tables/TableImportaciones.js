@@ -2,8 +2,6 @@ import React, { useContext, useState } from "react";
 import { Box, Typography, Paper, useTheme, useMediaQuery } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
-import ModalDetalleImportaciones from "../Modals/ModalDetalleImportaciones";
-import ImportacionesContext from "../../Context/Importaciones/ImportacionesContext";
 import EditIcon from "@mui/icons-material/Edit";
 import { dateFormatter } from "../../Utils/dateFormatter";
 import EditImportaciones from "../../Moduls/Importaciones/EditImportaciones";
@@ -12,22 +10,15 @@ import { Button } from "@mui/material";
 import AddImportaciones from "../../Moduls/Importaciones/AddImportaciones";
 import { EstadoChip } from "../../Utils/EstadoChip";
 import { esES } from "@mui/x-data-grid/locales";
+import FileUploadIcon from "@mui/icons-material/FileUpload";
+import AddFileExcel from "../../Moduls/Importaciones/AddFileExcel";
+import { useNavigate } from "react-router-dom";
 
 export default function TableImportaciones({ rows = [] }) {
-  const { importacion, GetImportacion } = useContext(ImportacionesContext);
   const theme = useTheme();
+  const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const role_id = localStorage.getItem("role_id");
-
-  const [openModal, setOpenModal] = useState(false);
-
-  const handleClickOpen = async (id) => {
-    await GetImportacion(id);
-    setOpenModal(true);
-  };
-  const handleClose = () => {
-    setOpenModal(false);
-  };
 
   const [modalUpdate, OpenModalUpdate] = useState(false);
   const [id_importacion, saveIdImportacion] = useState(null);
@@ -49,21 +40,33 @@ export default function TableImportaciones({ rows = [] }) {
     setOpenModalAdd(false);
   };
 
+  const [modalFile, setOpenModalFile] = useState(false);
+  const [id_importacion_file, saveIdImportacionFile] = useState(null);
+  const handleClickOpenFile = (id) => {
+    setOpenModalFile(true);
+    saveIdImportacionFile(id);
+  };
+
+  const handleClickCloseFile = () => {
+    setOpenModalFile(false);
+    saveIdImportacionFile(null);
+  };
+
   const columns = [
     {
       field: "actions",
       headerName: "Acciones",
-      flex: 0.5,
+      flex: 1,
       align: "center",
       headerAlign: "center",
-      minWidth: 50,
+      minWidth: 100,
       type: "actions",
       getActions: (params) => {
         const actions = [
           <GridActionsCellItem
             icon={<VisibilityIcon sx={{ color: "#42A5F5" }} />}
             label="Ver detalles"
-            onClick={() => handleClickOpen(params.id)}
+            onClick={() => navigate(`/importaciones/${params.id}`)}
           />,
         ];
         if (role_id !== "4") {
@@ -75,6 +78,16 @@ export default function TableImportaciones({ rows = [] }) {
             />,
           );
         }
+        if (role_id === "1") {
+          actions.push(
+            <GridActionsCellItem
+              icon={<FileUploadIcon sx={{ color: "#4ced02" }} />}
+              label="Importar Excel"
+              onClick={() => handleClickOpenFile(params.id)}
+            />,
+          );
+        }
+
         return actions;
       },
     },
@@ -132,7 +145,6 @@ export default function TableImportaciones({ rows = [] }) {
       headerAlign: "center",
       minWidth: 100,
       renderCell: (params) => dateFormatter(params.value),
-
     },
   ];
 
@@ -242,11 +254,6 @@ export default function TableImportaciones({ rows = [] }) {
           />
         </Box>
       </Paper>
-      <ModalDetalleImportaciones
-        open={openModal}
-        handleClose={handleClose}
-        importacion={importacion}
-      />
 
       {id_importacion !== null && (
         <EditImportaciones
@@ -257,6 +264,14 @@ export default function TableImportaciones({ rows = [] }) {
       )}
 
       <AddImportaciones open={modalAdd} handleClose={handleClickCloseAdd} />
+
+      {id_importacion_file !== null && (
+        <AddFileExcel
+          open={modalFile}
+          handleClose={handleClickCloseFile}
+          id={id_importacion_file}
+        />
+      )}
     </>
   );
 }

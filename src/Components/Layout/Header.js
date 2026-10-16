@@ -32,7 +32,7 @@ const MODULOS = [
   {
     id: 2,
     segment: "Categorias",
-    title: "Categorías",
+    title: "Categorias",
     icon: <CategoryIcon />,
   },
   {
