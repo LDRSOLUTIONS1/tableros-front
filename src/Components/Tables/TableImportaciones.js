@@ -13,6 +13,7 @@ import { esES } from "@mui/x-data-grid/locales";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import AddFileExcel from "../../Moduls/Importaciones/AddFileExcel";
 import { useNavigate } from "react-router-dom";
+import ViewListIcon from "@mui/icons-material/ViewList";
 
 export default function TableImportaciones({ rows = [] }) {
   const theme = useTheme();
@@ -64,26 +65,27 @@ export default function TableImportaciones({ rows = [] }) {
       getActions: (params) => {
         const actions = [
           <GridActionsCellItem
-            icon={<VisibilityIcon sx={{ color: "#42A5F5" }} />}
-            label="Ver detalles"
-            onClick={() => navigate(`/importaciones/${params.id}`)}
+            icon={<EditIcon sx={{ color: "#ed6c02" }} />}
+            label="Editar"
+            onClick={() => handleClickOpenEdit(params.id)}
           />,
         ];
-        if (role_id !== "4") {
-          actions.push(
-            <GridActionsCellItem
-              icon={<EditIcon sx={{ color: "#ed6c02" }} />}
-              label="Editar"
-              onClick={() => handleClickOpenEdit(params.id)}
-            />,
-          );
-        }
-        if (role_id === "1") {
+
+        if (role_id !== "5") {
           actions.push(
             <GridActionsCellItem
               icon={<FileUploadIcon sx={{ color: "#4ced02" }} />}
               label="Importar Excel"
               onClick={() => handleClickOpenFile(params.id)}
+            />,
+          );
+        }
+        if (role_id !== "5") {
+          actions.push(
+            <GridActionsCellItem
+              icon={<ViewListIcon sx={{ color: "#42b3f5" }} />}
+              label="Ver detalles"
+              onClick={() => navigate(`/importaciones/${params.id}`)}
             />,
           );
         }

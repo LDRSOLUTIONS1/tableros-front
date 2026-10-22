@@ -409,15 +409,24 @@ export default function AddFileExcel({ open, handleClose, id }) {
           </Grid>
         </DialogContent>
 
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={cerrarModal} color="error" variant="outlined">
+        <DialogActions>
+          <Button
+            onClick={handleClose}
+            sx={{
+              backgroundColor: "red",
+              color: "white",
+              "&:hover": { backgroundColor: "darkred" },
+            }}
+          >
             Cancelar
           </Button>
-
           <Button
             type="submit"
-            variant="contained"
-            disabled={!archivo || columnas.length === 0 || cargando}
+            sx={{
+              backgroundColor: "#1565c0",
+              color: "white",
+              "&:hover": { backgroundColor: "#0d47a1" },
+            }}
           >
             Importar Excel
           </Button>

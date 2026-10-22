@@ -2,6 +2,7 @@ import React, { useContext, useEffect } from "react";
 import Layout from "../../Components/Layout/Layout";
 import ImportacionesContext from "../../Context/Importaciones/ImportacionesContext";
 import TableImportaciones from "../../Components/Tables/TableImportaciones";
+import { Grid } from "@mui/material";
 
 const Importaciones = () => {
   const { importaciones, GetImportaciones } = useContext(ImportacionesContext);
@@ -12,7 +13,9 @@ const Importaciones = () => {
 
   return (
     <Layout>
-      <TableImportaciones rows={importaciones} />
+      <Grid spacing={2} sx={{ p: 2 }}>
+        <TableImportaciones rows={importaciones} />
+      </Grid>
     </Layout>
   );
 };

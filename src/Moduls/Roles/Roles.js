@@ -2,6 +2,7 @@ import React, { useContext, useEffect } from "react";
 import Layout from "../../Components/Layout/Layout";
 import RolesContext from "../../Context/Roles/RolesContext";
 import TableRoles from "../../Components/Tables/TableRoles";
+import { Grid } from "@mui/material";
 
 const Roles = () => {
   const { roles, GetRoles } = useContext(RolesContext);
@@ -12,7 +13,9 @@ const Roles = () => {
 
   return (
     <Layout>
-      <TableRoles rows={roles} />
+      <Grid spacing={2} sx={{ p: 2 }}>
+        <TableRoles rows={roles} />
+      </Grid>
     </Layout>
   );
 };
