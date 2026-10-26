@@ -1,17 +1,24 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Alert,
   AlertTitle,
+  Avatar,
   Box,
   Button,
   Chip,
   CircularProgress,
   Grid,
+  IconButton,
+  LinearProgress,
   Paper,
+  Skeleton,
   Tab,
   Tabs,
   Tooltip,
@@ -19,50 +26,73 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import ErrorIcon from "@mui/icons-material/Error";
-import HourglassTopIcon from "@mui/icons-material/HourglassTop";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import EventAvailableOutlinedIcon from "@mui/icons-material/EventAvailableOutlined";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import InboxOutlinedIcon from "@mui/icons-material/InboxOutlined";
+import InsertDriveFileOutlinedIcon from "@mui/icons-material/InsertDriveFileOutlined";
+import LayersOutlinedIcon from "@mui/icons-material/LayersOutlined";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import ScheduleOutlinedIcon from "@mui/icons-material/ScheduleOutlined";
+import TableChartOutlinedIcon from "@mui/icons-material/TableChartOutlined";
+import TableRowsOutlinedIcon from "@mui/icons-material/TableRowsOutlined";
+import VerifiedOutlinedIcon from "@mui/icons-material/VerifiedOutlined";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { esES } from "@mui/x-data-grid/locales";
-import MethodGet from "../../Config/Service";
+import MethodGet, { MethodGetPDF } from "../../Config/Service";
 import Layout from "../../Components/Layout/Layout";
 import { EstadoChip } from "../../Utils/EstadoChip";
 import { dateFormatter } from "../../Utils/dateFormatter";
+import DownloadIcon from "@mui/icons-material/Download";
 
 /* ----------------------------- Configuración ----------------------------- */
 
-// Columnas técnicas que no tiene sentido mostrar en la tabla
 const HIDDEN_FIELDS = [
-  "id",
   "excel_import_version_id",
   "registro_hash",
   "created_at",
   "updated_at",
 ];
 
-// Columnas que existen pero se repiten en todas las filas: ocultas por defecto
-// (el usuario puede activarlas desde el menú "Columnas")
-const HIDDEN_BY_DEFAULT = { prod_est: false, cobertura: false };
+// false = oculta la columna inicialmente en MUI DataGrid.
+const HIDDEN_BY_DEFAULT = {
+  prod_est: false,
+  cobertura: false,
+};
 
-// Campos numéricos que NO deben formatearse con separador de miles (2,021)
-const NO_THOUSANDS = ["anio", "mes_numero"];
+// Años y números de mes se muestran sin separador de miles.
+const NO_THOUSANDS = ["anio", "mes_numero", "numero_mes", "year"];
 
-// Encabezados amigables (con acentos). Si no está aquí, se "embellece" la llave.
+// Mientras haya una carga en curso se consulta el historial cada N ms.
+const POLLING_MS = 5000;
+
 const LABELS = {
   anio: "Año",
+  year: "Año",
   mes_numero: "Mes (n.º)",
+  numero_mes: "Número de mes",
   mes: "Mes",
   marca: "Marca",
   modelo: "Modelo",
   tipo: "Tipo",
   segmento: "Segmento",
+  segmento_inegi: "Segmento INEGI",
   pais_destino: "País destino",
+  pais_origen: "País de origen",
   exportacion: "Exportación (unidades)",
+  produccion: "Producción (unidades)",
+  cantidad: "Cantidad",
   prod_est: "Fuente",
   cobertura: "Cobertura",
+  tema: "Tema",
+  origen: "Origen",
+  mercado_inegi: "Mercado INEGI",
+  marca_mercado_foton: "Marca mercado FOTON",
+  unidad_foton_inegi: "Unidad FOTON INEGI",
+  seg_pv: "Segmento P&V",
+  origen_2: "Origen 2",
 };
 
 const STATUS_CHIP = {
@@ -72,60 +102,153 @@ const STATUS_CHIP = {
   failed: { label: "Fallida", color: "error" },
 };
 
+const IN_PROGRESS = ["pending", "processing"];
+
 const prettify = (key) =>
   LABELS[key] ?? key.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 
-const formatBytes = (bytes = 0) =>
-  bytes < 1024 * 1024
-    ? `${(bytes / 1024).toFixed(1)} KB`
-    : `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+const statusColor = (status) => STATUS_CHIP[status]?.color ?? "primary";
 
 const formatDate = (value) => (value ? dateFormatter(value) : "—");
 
-// Las filas vienen dentro de la versión bajo una llave distinta según el Excel
-// (exportacion_vehiculos, venta_publico, etc.). Tomamos la primera llave que sea arreglo.
-const getRowsFromVersion = (version) => {
-  if (!version) return [];
-  const key = Object.keys(version).find((k) => Array.isArray(version[k]));
-  return key ? version[key] : [];
-};
+const formatNumber = (value) =>
+  typeof value === "number" ? value.toLocaleString("es-MX") : (value ?? "—");
 
 /* ------------------------------ Componentes ------------------------------ */
 
-const InfoItem = ({ label, children }) => (
-  <Box>
-    <Typography variant="caption" color="text.secondary">
-      {label}
-    </Typography>
-    <Box sx={{ fontWeight: 600, wordBreak: "break-word" }}>{children}</Box>
+const StatusChip = ({ status }) => {
+  const config = STATUS_CHIP[status] ?? {
+    label: status || "Desconocido",
+    color: "default",
+  };
+
+  return <Chip label={config.label} color={config.color} size="small" />;
+};
+
+const MetaItem = ({ icon, label, children }) => (
+  <Box
+    sx={{ display: "flex", alignItems: "flex-start", gap: 1.25, minWidth: 0 }}
+  >
+    <Box sx={{ color: "text.secondary", display: "flex", mt: "2px" }}>
+      {icon}
+    </Box>
+    <Box sx={{ minWidth: 0 }}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: "block", lineHeight: 1.2 }}
+      >
+        {label}
+      </Typography>
+      <Typography
+        variant="body2"
+        component="div"
+        sx={{ fontWeight: 600, wordBreak: "break-word" }}
+      >
+        {children ?? "—"}
+      </Typography>
+    </Box>
   </Box>
 );
 
-const SummaryCard = ({ title, value, helper }) => (
+const KpiCard = ({ icon, title, value, helper, color = "primary" }) => (
   <Paper
     elevation={0}
-    sx={{ p: 2, borderRadius: 3, border: "1px solid #000000", height: "100%" }}
+    sx={{
+      p: 2,
+      height: "100%",
+      borderRadius: 3,
+      border: "1px solid",
+      borderColor: "divider",
+      display: "flex",
+      alignItems: "center",
+      gap: 2,
+    }}
   >
-    <Typography variant="caption" color="text.secondary">
-      {title}
-    </Typography>
-    <Box sx={{ mt: 0.5, fontSize: "1.4rem", fontWeight: 700, lineHeight: 1.2 }}>
-      {value}
-    </Box>
-    {helper && (
+    <Avatar
+      variant="rounded"
+      sx={(theme) => ({
+        width: 46,
+        height: 46,
+        borderRadius: 2.5,
+        bgcolor: alpha(theme.palette[color].main, 0.12),
+        color: theme.palette[color].main,
+      })}
+    >
+      {icon}
+    </Avatar>
+    <Box sx={{ minWidth: 0 }}>
       <Typography variant="caption" color="text.secondary">
-        {helper}
+        {title}
       </Typography>
-    )}
+      <Box sx={{ fontSize: "1.35rem", fontWeight: 700, lineHeight: 1.25 }}>
+        {value}
+      </Box>
+      {helper && (
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          noWrap
+          sx={{ display: "block" }}
+        >
+          {helper}
+        </Typography>
+      )}
+    </Box>
   </Paper>
 );
 
-const StatusIcon = ({ status }) => {
-  if (status === "completed")
-    return <CheckCircleIcon color="success" fontSize="small" />;
-  if (status === "failed") return <ErrorIcon color="error" fontSize="small" />;
-  return <HourglassTopIcon color="warning" fontSize="small" />;
-};
+const EmptyState = ({ title, description, action }) => (
+  <Box
+    sx={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 1,
+      py: 7,
+      px: 2,
+      color: "text.secondary",
+      textAlign: "center",
+    }}
+  >
+    <Avatar
+      sx={{
+        width: 72,
+        height: 72,
+        bgcolor: "action.hover",
+        color: "text.secondary",
+        mb: 1,
+      }}
+    >
+      <InboxOutlinedIcon sx={{ fontSize: 38 }} />
+    </Avatar>
+    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+      {title}
+    </Typography>
+    {description && (
+      <Typography variant="body2" sx={{ maxWidth: 460 }}>
+        {description}
+      </Typography>
+    )}
+    {action}
+  </Box>
+);
+
+const PageSkeleton = () => (
+  <Box sx={{ p: { xs: 2, md: 4 } }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Skeleton variant="rounded" height={110} sx={{ borderRadius: 4 }} />
+      <Grid container spacing={2}>
+        {[0, 1, 2, 3].map((item) => (
+          <Grid item xs={12} sm={6} md={3} key={item}>
+            <Skeleton variant="rounded" height={92} sx={{ borderRadius: 3 }} />
+          </Grid>
+        ))}
+      </Grid>
+      <Skeleton variant="rounded" height={420} sx={{ borderRadius: 4 }} />
+    </Box>
+  </Box>
+);
 
 /* -------------------------------- Vista --------------------------------- */
 
@@ -135,180 +258,616 @@ const DetalleImportaciones = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const [importacion, saveImportacion] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState(0);
+
+  const [datosActuales, setDatosActuales] = useState(null);
+  const [versiones, setVersiones] = useState([]);
   const [selectedVersionId, setSelectedVersionId] = useState(null);
 
+  const [loadingDatos, setLoadingDatos] = useState(true);
+  const [loadingVersiones, setLoadingVersiones] = useState(true);
+  const [errorDatos, setErrorDatos] = useState("");
+  const [errorVersiones, setErrorVersiones] = useState("");
+
+  const [datosTick, setDatosTick] = useState(0);
+  const [copied, setCopied] = useState(false);
+
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: 25,
+  });
+
+  //Download excel
+  const [downloadingId, setDownloadingId] = useState(null);
+
+  const handleDownload = async (version) => {
+    if (!version?.id || !id) {
+      window.alert("No se encontró la información de la versión.");
+      return;
+    }
+
+    try {
+      setDownloadingId(version.id);
+
+      // id = ID de la fuente de Excel.
+      // version.id = ID de la versión que se desea descargar.
+      const response = await MethodGetPDF(
+        `/importaciones/${id}/versiones/${version.id}/descargar`,
+        {},
+        {
+          responseType: "blob",
+        },
+      );
+
+      const blob = response.data;
+
+      if (!(blob instanceof Blob) || blob.size === 0) {
+        throw new Error("El servidor no devolvió un archivo válido.");
+      }
+
+      // Laravel puede devolver JSON o HTML si ocurrió un error.
+      if (
+        blob.type.includes("application/json") ||
+        blob.type.includes("text/html")
+      ) {
+        const contenido = await blob.text();
+
+        let mensaje = contenido;
+
+        try {
+          const respuestaJson = JSON.parse(contenido);
+          mensaje = respuestaJson.message || contenido;
+        } catch {
+          // Se conserva el contenido original si no es JSON.
+        }
+
+        throw new Error(
+          mensaje || "No fue posible descargar el archivo Excel.",
+        );
+      }
+
+      // Crear un enlace temporal para iniciar la descarga.
+      const objectUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = objectUrl;
+      link.download =
+        version.original_filename || `version-${version.version_number}.xlsx`;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      // Liberar la URL temporal.
+      window.setTimeout(() => {
+        window.URL.revokeObjectURL(objectUrl);
+      }, 1000);
+    } catch (error) {
+      console.error("Error al descargar el Excel:", error);
+
+      window.alert(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Ocurrió un error al descargar el archivo Excel.",
+      );
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  // Permite descartar respuestas de una fuente anterior si el usuario navega.
+  const activeIdRef = useRef(id);
   useEffect(() => {
-    if (!id) return;
-    setLoading(true);
-    MethodGet(`/importaciones/${id}`)
-      .then((res) => {
-        saveImportacion(res.data);
-        setSelectedVersionId(res.data.current_version_id);
-      })
-      .catch((error) => console.log(error))
-      .finally(() => setLoading(false));
+    activeIdRef.current = id;
   }, [id]);
 
-  // Versiones ordenadas de la más nueva a la más vieja
-  const versions = useMemo(
-    () =>
-      [...(importacion?.versions ?? [])].sort(
-        (a, b) => b.version_number - a.version_number,
-      ),
-    [importacion],
+  // Reinicia el estado si el usuario navega a otra fuente.
+  useEffect(() => {
+    setPaginationModel({ page: 0, pageSize: 25 });
+    setTab(0);
+    setDatosActuales(null);
+    setVersiones([]);
+    setSelectedVersionId(null);
+    setErrorDatos("");
+    setErrorVersiones("");
+  }, [id]);
+
+  // Endpoint 1: datos vigentes de la fuente, paginados desde Laravel.
+  useEffect(() => {
+    if (!id) return undefined;
+
+    let cancelled = false;
+    setLoadingDatos(true);
+    setErrorDatos("");
+
+    MethodGet(
+      `/${id}/datos?page=${paginationModel.page + 1}&per_page=${paginationModel.pageSize}`,
+    )
+      .then((res) => {
+        if (!cancelled) setDatosActuales(res.data);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.error("Error al consultar los datos actuales:", error);
+          setErrorDatos(
+            error?.response?.data?.message ??
+              "No fue posible cargar los datos actuales de esta fuente.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingDatos(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, paginationModel.page, paginationModel.pageSize, datosTick]);
+
+  // Endpoint 2: historial de intentos/importaciones (solo metadatos).
+  // `silent` evita parpadeos de carga cuando se consulta en segundo plano.
+  const loadVersiones = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!id) return;
+
+      if (!silent) {
+        setLoadingVersiones(true);
+        setErrorVersiones("");
+      }
+
+      try {
+        const res = await MethodGet(`/${id}/versiones`);
+        if (activeIdRef.current !== id) return;
+
+        const ordered = [...(res.data?.versions ?? [])].sort(
+          (a, b) => b.version_number - a.version_number,
+        );
+
+        setVersiones(ordered);
+        setSelectedVersionId((previousId) => {
+          if (ordered.some((version) => version.id === previousId)) {
+            return previousId;
+          }
+          return (
+            ordered.find((version) => version.is_current)?.id ??
+            ordered[0]?.id ??
+            null
+          );
+        });
+      } catch (error) {
+        if (activeIdRef.current !== id || silent) return;
+        console.error("Error al consultar el historial:", error);
+        setErrorVersiones(
+          error?.response?.data?.message ??
+            "No fue posible cargar el historial de importaciones.",
+        );
+      } finally {
+        if (!silent && activeIdRef.current === id) setLoadingVersiones(false);
+      }
+    },
+    [id],
   );
 
-  const currentVersion = useMemo(
-    () =>
-      versions.find((v) => v.id === importacion?.current_version_id) ?? null,
-    [versions, importacion],
-  );
+  useEffect(() => {
+    loadVersiones();
+  }, [loadVersiones]);
 
-  const latestVersion = versions[0] ?? null;
+  const source = datosActuales?.source ?? null;
+  const currentVersion = datosActuales?.version ?? null;
+  const dataset = datosActuales?.dataset ?? null;
+  const rows = datosActuales?.rows ?? [];
+  const pagination = datosActuales?.pagination ?? {
+    current_page: 1,
+    per_page: paginationModel.pageSize,
+    total: 0,
+    last_page: 1,
+  };
 
+  const latestVersion = versiones[0] ?? null;
   const selectedVersion = useMemo(
-    () => versions.find((v) => v.id === selectedVersionId) ?? null,
-    [versions, selectedVersionId],
+    () => versiones.find((version) => version.id === selectedVersionId) ?? null,
+    [versiones, selectedVersionId],
   );
 
-  // Versión COMPLETADA inmediatamente anterior: sirve para mostrar la diferencia de filas.
-  // (Una versión fallida tiene 0 filas y daría una comparación engañosa.)
-  const previousCompletedVersion = useMemo(() => {
-    if (!selectedVersion) return null;
-    return (
-      versions.find(
-        (v) =>
-          v.version_number < selectedVersion.version_number &&
-          v.status === "completed",
-      ) ?? null
+  const importInProgress = IN_PROGRESS.includes(latestVersion?.status);
+
+  // Si hay una carga en curso, se actualiza el historial automáticamente.
+  useEffect(() => {
+    if (!importInProgress) return undefined;
+
+    const timer = setInterval(
+      () => loadVersiones({ silent: true }),
+      POLLING_MS,
     );
-  }, [versions, selectedVersion]);
+    return () => clearInterval(timer);
+  }, [importInProgress, loadVersiones]);
 
-  const rows = useMemo(
-    () => getRowsFromVersion(selectedVersion),
-    [selectedVersion],
-  );
+  // Al terminar la carga, se refrescan también los datos vigentes.
+  const wasInProgress = useRef(false);
+  useEffect(() => {
+    if (wasInProgress.current && !importInProgress) {
+      setDatosTick((tick) => tick + 1);
+    }
+    wasInProgress.current = importInProgress;
+  }, [importInProgress]);
 
-  // Columnas generadas automáticamente a partir de la data (sirve para cualquier Excel).
-  // Primero las de texto y al final las numéricas, para leer cada fila de izquierda a derecha.
+  const latestFailedNotCurrent =
+    latestVersion?.status === "failed" &&
+    latestVersion.id !== currentVersion?.id;
+
+  const handleCopyError = async () => {
+    try {
+      await navigator.clipboard.writeText(selectedVersion?.error_message ?? "");
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error("No se pudo copiar el error:", error);
+    }
+  };
+
   const columns = useMemo(() => {
-    if (!rows.length) return [];
-    const sample = rows[0];
-    const keys = Object.keys(sample).filter(
-      (key) => !HIDDEN_FIELDS.includes(key),
+    const fields = (dataset?.columns ?? []).filter(
+      (field) => !HIDDEN_FIELDS.includes(field),
     );
-    const isMetric = (key) =>
-      typeof sample[key] === "number" && !NO_THOUSANDS.includes(key);
 
-    const ordered = [
-      ...keys.filter((k) => !isMetric(k)),
-      ...keys.filter((k) => isMetric(k)),
-    ];
+    const rowNumberColumn = {
+      field: "__rowNumber",
+      headerName: "#",
+      width: 70,
+      align: "center",
+      headerAlign: "center",
+      sortable: false,
+      filterable: false,
+      hideable: false,
+      disableColumnMenu: true,
+      renderCell: (params) =>
+        paginationModel.page * paginationModel.pageSize +
+        params.api.getRowIndexRelativeToVisibleRows(params.id) +
+        1,
+    };
 
-    return ordered.map((key) => {
-      const isNumber = isMetric(key);
+    // La API devuelve tipos JSON; se infiere el tipo numérico con las filas cargadas.
+    const dataColumns = fields.map((field) => {
+      const isNumber = rows.some((row) => typeof row[field] === "number");
+
       return {
-        field: key,
-        headerName: prettify(key),
-        minWidth: key === "prod_est" ? 260 : 130,
-        flex: key === "prod_est" ? 2 : 1,
+        field,
+        headerName: prettify(field),
+        minWidth: field === "prod_est" ? 240 : 140,
+        flex: field === "prod_est" ? 2 : 1,
         type: isNumber ? "number" : undefined,
         align: isNumber ? "right" : "left",
         headerAlign: isNumber ? "right" : "left",
-        valueFormatter: isNumber
-          ? (value) => (value ?? 0).toLocaleString("es-MX")
-          : undefined,
+        valueFormatter: (value) => {
+          if (value == null || value === "") return "—";
+          if (typeof value === "number" && !NO_THOUSANDS.includes(field)) {
+            return value.toLocaleString("es-MX");
+          }
+          return String(value);
+        },
       };
     });
-  }, [rows]);
 
-  if (loading) {
+    return [rowNumberColumn, ...dataColumns];
+  }, [dataset, rows, paginationModel.page, paginationModel.pageSize]);
+
+  const historyRows = useMemo(
+    () =>
+      versiones.map((version) => ({
+        ...version,
+        imported_by_name: version.imported_by?.name ?? "—",
+        display_date: formatDate(version.imported_at ?? version.created_at),
+      })),
+    [versiones],
+  );
+
+  const historyColumns = useMemo(
+    () => [
+      {
+        field: "version_number",
+        headerName: "Versión",
+        minWidth: 130,
+        flex: 0.7,
+        renderCell: (params) => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Typography variant="body2" fontWeight={600}>
+              v{params.row.version_number}
+            </Typography>
+            {params.row.is_current && (
+              <Chip label="Vigente" color="primary" size="small" />
+            )}
+          </Box>
+        ),
+      },
+      {
+        field: "original_filename",
+        headerName: "Archivo",
+        minWidth: 190,
+        flex: 1.4,
+      },
+      {
+        field: "status",
+        headerName: "Estado",
+        minWidth: 135,
+        flex: 0.8,
+        renderCell: (params) => <StatusChip status={params.value} />,
+      },
+      {
+        field: "total_rows",
+        headerName: "Filas importadas",
+        minWidth: 140,
+        type: "number",
+        align: "right",
+        headerAlign: "right",
+        valueFormatter: (value) => formatNumber(value),
+      },
+      {
+        field: "imported_by_name",
+        headerName: "Importado por",
+        minWidth: 150,
+        flex: 0.8,
+      },
+      {
+        field: "display_date",
+        headerName: "Fecha",
+        minWidth: 150,
+        flex: 0.9,
+      },
+      {
+        field: "error_message",
+        headerName: "Error",
+        minWidth: 110,
+        sortable: false,
+        renderCell: (params) =>
+          params.value ? (
+            <Tooltip title="Haz clic en la fila para ver el detalle" arrow>
+              <Chip
+                label="Ver error"
+                color="error"
+                variant="outlined"
+                size="small"
+              />
+            </Tooltip>
+          ) : (
+            "—"
+          ),
+      },
+      {
+        field: "actions",
+        headerName: "Descargar",
+        width: 110,
+        sortable: false,
+        filterable: false,
+        disableColumnMenu: true,
+        align: "center",
+        headerAlign: "center",
+        renderCell: (params) => {
+          const busy = downloadingId === params.row.id;
+          return (
+            <Tooltip title={`Descargar ${params.row.original_filename}`} arrow>
+              <span>
+                <IconButton
+                  size="small"
+                  color="primary"
+                  disabled={busy}
+                  onClick={(event) => {
+                    // Evita que el clic también seleccione la fila.
+                    event.stopPropagation();
+                    handleDownload(params.row);
+                  }}
+                >
+                  {busy ? (
+                    <CircularProgress size={18} />
+                  ) : (
+                    <DownloadIcon fontSize="small" />
+                  )}
+                </IconButton>
+              </span>
+            </Tooltip>
+          );
+        },
+      },
+    ],
+    [],
+  );
+
+  const gridSx = {
+    border: "none",
+    "& .MuiDataGrid-columnHeaders": {
+      backgroundColor: alpha(theme.palette.primary.main, 0.06),
+      borderBottom: `2px solid ${theme.palette.primary.main}`,
+    },
+    "& .MuiDataGrid-columnHeaderTitle": {
+      fontWeight: 700,
+      fontSize: "0.85rem",
+    },
+    "& .MuiDataGrid-footerContainer": {
+      borderTop: `1px solid ${theme.palette.divider}`,
+    },
+    "& .MuiDataGrid-cell": {
+      borderBottom: `1px solid ${theme.palette.divider}`,
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+    },
+    "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
+      outline: "none",
+    },
+    "& .zebra": {
+      backgroundColor: alpha(theme.palette.grey[500], 0.045),
+    },
+    "& .MuiDataGrid-row:hover": {
+      backgroundColor: theme.palette.action.hover,
+      transition: "background-color 0.2s ease-in-out",
+    },
+  };
+
+  /* ------------------------- Estados de la página ------------------------- */
+
+  if (loadingDatos && !source) {
     return (
       <Layout>
-        <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
-          <CircularProgress />
+        <PageSkeleton />
+      </Layout>
+    );
+  }
+
+  if (!source) {
+    return (
+      <Layout>
+        <Box sx={{ p: { xs: 2, md: 4 } }}>
+          <Button
+            variant="text"
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate("/importaciones")}
+            sx={{ mb: 2 }}
+          >
+            Volver a importaciones
+          </Button>
+          {errorDatos ? (
+            <Alert
+              severity="error"
+              action={
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={() => setDatosTick((tick) => tick + 1)}
+                >
+                  Reintentar
+                </Button>
+              }
+            >
+              {errorDatos}
+            </Alert>
+          ) : (
+            <Alert severity="warning">
+              No se encontró la fuente de importación.
+            </Alert>
+          )}
         </Box>
       </Layout>
     );
   }
 
-  if (!importacion) {
-    return (
-      <Layout>
-        <Typography>No se encontró la importación.</Typography>
-      </Layout>
-    );
-  }
-
-  const statusChip = STATUS_CHIP[selectedVersion?.status] ?? {
-    label: selectedVersion?.status,
-    color: "default",
-  };
-  const latestStatusChip = STATUS_CHIP[latestVersion?.status] ?? {
-    label: latestVersion?.status,
-    color: "default",
-  };
-
-  const isSelectedCurrent =
-    selectedVersion?.id === importacion.current_version_id;
-  const isFailed = selectedVersion?.status === "failed";
-  const isInProgress = ["pending", "processing"].includes(
-    selectedVersion?.status,
-  );
-
-  const diffRows =
-    selectedVersion?.status === "completed" && previousCompletedVersion
-      ? selectedVersion.total_rows - previousCompletedVersion.total_rows
-      : null;
-
-  // Si la última carga falló, lo avisamos arriba para que no pase desapercibido
-  const latestFailedNotCurrent =
-    latestVersion?.status === "failed" &&
-    latestVersion.id !== currentVersion?.id;
+  const currentColor = currentVersion
+    ? statusColor(currentVersion.status)
+    : "warning";
+  const latestColor = latestVersion
+    ? statusColor(latestVersion.status)
+    : "primary";
 
   return (
     <Layout>
-      <Grid spacing={2} sx={{ p: 6 }}>
+      <Box sx={{ p: { xs: 2, md: 4 } }}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          {/* Encabezado */}
-          <Paper
-            elevation={0}
-            sx={{ p: 3, borderRadius: 4, border: "1px solid #000000" }}
-          >
-            <Box
+          {/* Navegación + encabezado de la fuente */}
+          <Box>
+            <Button
+              variant="text"
+              size="small"
+              startIcon={<ArrowBackIcon />}
+              onClick={() => navigate("/importaciones")}
+              sx={{ mb: 1, ml: -1 }}
+            >
+              Volver a importaciones
+            </Button>
+
+            <Paper
+              elevation={0}
               sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                flexWrap: "wrap",
-                gap: 2,
+                p: { xs: 2, md: 3 },
+                borderRadius: 4,
+                border: "1px solid",
+                borderColor: "divider",
+                background: `linear-gradient(135deg, ${alpha(
+                  theme.palette.primary.main,
+                  0.07,
+                )} 0%, ${theme.palette.background.paper} 60%)`,
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<ArrowBackIcon />}
-                  onClick={() => navigate("/importaciones")}
-                  sx={{ borderRadius: 3 }}
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: { xs: "flex-start", sm: "center" },
+                  flexDirection: { xs: "column", sm: "row" },
+                  gap: 2,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    minWidth: 0,
+                  }}
                 >
-                  Volver
-                </Button>
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                    {importacion.nombre}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {importacion.codigo}
-                  </Typography>
+                  <Avatar
+                    variant="rounded"
+                    sx={{
+                      width: 52,
+                      height: 52,
+                      borderRadius: 3,
+                      bgcolor: "primary.main",
+                      color: "primary.contrastText",
+                    }}
+                  >
+                    <TableChartOutlinedIcon />
+                  </Avatar>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                      {source.nombre}
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                        gap: 1,
+                        mt: 0.5,
+                      }}
+                    >
+                      <Chip
+                        label={source.codigo}
+                        size="small"
+                        variant="outlined"
+                        sx={{ fontFamily: "monospace", fontWeight: 600 }}
+                      />
+                      {dataset?.label && (
+                        <Typography variant="body2" color="text.secondary">
+                          {dataset.label}
+                        </Typography>
+                      )}
+                    </Box>
+                    {source.descripcion && (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mt: 0.75 }}
+                      >
+                        {source.descripcion}
+                      </Typography>
+                    )}
+                  </Box>
                 </Box>
+                <EstadoChip estado={source.estado} />
               </Box>
-              <EstadoChip estado={importacion.estado} />
-            </Box>
-          </Paper>
+            </Paper>
+          </Box>
 
-          {/* Aviso global: la última carga falló */}
+          {/* Carga en curso */}
+          {importInProgress && (
+            <Alert severity="info" icon={false}>
+              <AlertTitle>
+                Hay una carga en proceso (v{latestVersion.version_number})
+              </AlertTitle>
+              Esta pantalla se actualiza sola. Mientras tanto, los datos que ves
+              siguen siendo los de la versión vigente.
+              <LinearProgress sx={{ mt: 1.5, borderRadius: 1 }} />
+            </Alert>
+          )}
+
+          {/* Aviso si el último intento falló */}
           {latestFailedNotCurrent && (
             <Alert
               severity="error"
@@ -316,49 +875,60 @@ const DetalleImportaciones = () => {
                 <Button
                   color="inherit"
                   size="small"
-                  onClick={() => setSelectedVersionId(latestVersion.id)}
+                  onClick={() => {
+                    setTab(1);
+                    setSelectedVersionId(latestVersion.id);
+                  }}
                 >
                   Ver detalle
                 </Button>
               }
             >
-              La última carga (v{latestVersion.version_number}) falló.
+              <AlertTitle>
+                La última carga (v{latestVersion.version_number}) falló.
+              </AlertTitle>
               {currentVersion
-                ? ` Los datos vigentes siguen siendo los de la v${currentVersion.version_number}.`
-                : ""}
+                ? `Los datos actuales siguen asociados a la versión vigente v${currentVersion.version_number}.`
+                : "No hay una versión completada identificada como vigente."}
             </Alert>
           )}
 
-          {/* Resumen rápido de la fuente */}
+          {/* Resumen de la fuente */}
           <Grid container spacing={2}>
-            <Grid item xs={6} md={3}>
-              <SummaryCard
+            <Grid item xs={12} sm={6} md={3}>
+              <KpiCard
+                icon={<VerifiedOutlinedIcon />}
+                color={currentColor}
                 title="Versión vigente"
                 value={
                   currentVersion ? `v${currentVersion.version_number}` : "—"
                 }
-                helper="La que usan los reportes y Power BI"
+                helper={
+                  currentVersion
+                    ? `Importada ${formatDate(currentVersion.imported_at)}`
+                    : "Sin versión vigente"
+                }
               />
             </Grid>
-            <Grid item xs={6} md={3}>
-              <SummaryCard
-                title="Registros vigentes"
-                value={(currentVersion?.total_rows ?? 0).toLocaleString(
-                  "es-MX",
+            <Grid item xs={12} sm={6} md={3}>
+              <KpiCard
+                icon={<TableRowsOutlinedIcon />}
+                color="primary"
+                title="Registros actuales"
+                value={formatNumber(
+                  pagination.total ?? currentVersion?.total_rows ?? 0,
                 )}
-                helper="Filas de la versión vigente"
+                helper="Filas en el conjunto vigente"
               />
             </Grid>
-            <Grid item xs={6} md={3}>
-              <SummaryCard
+            <Grid item xs={12} sm={6} md={3}>
+              <KpiCard
+                icon={<EventAvailableOutlinedIcon />}
+                color={latestColor}
                 title="Última carga"
                 value={
                   latestVersion ? (
-                    <Chip
-                      label={latestStatusChip.label}
-                      color={latestStatusChip.color}
-                      size="small"
-                    />
+                    <StatusChip status={latestVersion.status} />
                   ) : (
                     "—"
                   )
@@ -368,307 +938,493 @@ const DetalleImportaciones = () => {
                     ? formatDate(
                         latestVersion.imported_at ?? latestVersion.created_at,
                       )
-                    : undefined
+                    : "Sin importaciones registradas"
                 }
               />
             </Grid>
-            <Grid item xs={6} md={3}>
-              <SummaryCard
+            <Grid item xs={12} sm={6} md={3}>
+              <KpiCard
+                icon={<LayersOutlinedIcon />}
+                color="info"
                 title="Versiones"
-                value={versions.length}
+                value={loadingVersiones ? "…" : versiones.length}
                 helper="Cargas registradas"
               />
             </Grid>
           </Grid>
 
-          {/* Versionamiento */}
+          {/* Panel principal con las dos consultas */}
           <Paper
             elevation={0}
-            sx={{ p: 3, borderRadius: 4, border: "1px solid #000000" }}
+            sx={{
+              p: { xs: 1.5, md: 3 },
+              borderRadius: 4,
+              border: "1px solid",
+              borderColor: "divider",
+            }}
           >
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Historial de versiones
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              Selecciona una versión para ver sus datos y su información.
-            </Typography>
-
             <Tabs
-              value={selectedVersionId}
-              onChange={(_, value) => setSelectedVersionId(value)}
+              value={tab}
+              onChange={(_, newValue) => setTab(newValue)}
               variant="scrollable"
               scrollButtons="auto"
-              sx={{ mb: 2, borderBottom: 1, borderColor: "divider" }}
+              sx={{ mb: 2.5, borderBottom: 1, borderColor: "divider" }}
             >
-              {versions.map((v) => (
-                <Tab
-                  key={v.id}
-                  value={v.id}
-                  icon={<StatusIcon status={v.status} />}
-                  iconPosition="end"
-                  label={
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      {`v${v.version_number}`}
-                      {v.id === importacion.current_version_id && (
-                        <Chip label="Vigente" color="primary" size="small" />
-                      )}
-                    </Box>
-                  }
-                />
-              ))}
+              <Tab
+                icon={<TableChartOutlinedIcon fontSize="small" />}
+                iconPosition="start"
+                label="Datos actuales"
+                sx={{ minHeight: 48, textTransform: "none", fontWeight: 600 }}
+              />
+              <Tab
+                icon={<HistoryOutlinedIcon fontSize="small" />}
+                iconPosition="start"
+                label={`Historial de cargas (${versiones.length})`}
+                sx={{ minHeight: 48, textTransform: "none", fontWeight: 600 }}
+              />
             </Tabs>
 
-            {/* Mensaje contextual según la versión seleccionada */}
-            {selectedVersion && isFailed && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                <AlertTitle>
-                  Esta carga falló y no se importó ningún dato
-                </AlertTitle>
-                {selectedVersion.error_message ??
-                  "Ocurrió un error durante la importación."}
-                {currentVersion && !isSelectedCurrent && (
-                  <Box sx={{ mt: 1 }}>
-                    Los datos vigentes siguen siendo los de la v
-                    {currentVersion.version_number}.{" "}
-                    <Button
-                      size="small"
-                      color="inherit"
-                      sx={{ textDecoration: "underline", p: 0, minWidth: 0 }}
-                      onClick={() => setSelectedVersionId(currentVersion.id)}
-                    >
-                      Ver versión vigente
-                    </Button>
-                  </Box>
-                )}
-              </Alert>
-            )}
-
-            {selectedVersion && isInProgress && (
-              <Alert severity="info" sx={{ mb: 2 }}>
-                Esta carga todavía se está procesando. Actualiza la página en
-                unos momentos.
-              </Alert>
-            )}
-
-            {selectedVersion &&
-              !isFailed &&
-              !isInProgress &&
-              !isSelectedCurrent &&
-              currentVersion && (
-                <Alert severity="warning" sx={{ mb: 2 }}>
-                  Estás viendo una versión anterior. La versión vigente es la v
-                  {currentVersion.version_number}.{" "}
-                  <Button
-                    size="small"
-                    color="inherit"
-                    sx={{ textDecoration: "underline", p: 0, minWidth: 0 }}
-                    onClick={() => setSelectedVersionId(currentVersion.id)}
-                  >
-                    Ir a la vigente
-                  </Button>
-                </Alert>
-              )}
-
-            {selectedVersion && (
-              <>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <InfoItem label="Archivo">
-                      {selectedVersion.original_filename}
-                    </InfoItem>
-                  </Grid>
-                  <Grid item xs={6} md={2}>
-                    <InfoItem label="Estatus">
-                      <Chip
-                        label={statusChip.label}
-                        color={statusChip.color}
-                        size="small"
-                      />
-                    </InfoItem>
-                  </Grid>
-                  <Grid item xs={6} md={2}>
-                    <InfoItem label="Filas importadas">
-                      {selectedVersion.total_rows.toLocaleString("es-MX")}
-                      {diffRows !== null && diffRows !== 0 && (
-                        <Typography
-                          component="span"
-                          variant="caption"
-                          sx={{ ml: 1 }}
-                          color={diffRows > 0 ? "success.main" : "error.main"}
-                        >
-                          {diffRows > 0 ? `+${diffRows}` : diffRows} vs v
-                          {previousCompletedVersion.version_number}
-                        </Typography>
-                      )}
-                    </InfoItem>
-                  </Grid>
-                  <Grid item xs={6} md={2}>
-                    <InfoItem label="Importado por">
-                      {selectedVersion.imported_by?.name ?? "—"}
-                    </InfoItem>
-                  </Grid>
-                  <Grid item xs={6} md={3}>
-                    <InfoItem
-                      label={
-                        isFailed ? "Fecha del intento" : "Fecha de importación"
-                      }
-                    >
-                      {formatDate(
-                        selectedVersion.imported_at ??
-                          selectedVersion.created_at,
-                      )}
-                    </InfoItem>
-                  </Grid>
-                </Grid>
-
-                {/* Datos técnicos plegados: útiles para soporte, ruido para el resto */}
-                <Accordion
-                  disableGutters
-                  elevation={0}
+            {/* Pestaña 1: conjunto de datos vigente */}
+            {tab === 0 && (
+              <Box>
+                <Box
                   sx={{
-                    mt: 2,
-                    border: "1px solid",
-                    borderColor: "divider",
-                    borderRadius: 2,
-                    "&:before": { display: "none" },
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: { xs: "flex-start", sm: "center" },
+                    flexDirection: { xs: "column", sm: "row" },
+                    gap: 1,
+                    mb: 2,
                   }}
                 >
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography variant="body2" color="text.secondary">
-                      Detalles técnicos del archivo
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                      {dataset?.label ?? "Datos actuales"}
                     </Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
+                    <Typography variant="body2" color="text.secondary">
+                      Vista de solo lectura del conjunto vigente. Usa el botón
+                      “Columnas” para mostrar u ocultar campos.
+                    </Typography>
+                  </Box>
+                  {currentVersion && (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        disabled={downloadingId === currentVersion.id}
+                        startIcon={
+                          downloadingId === currentVersion.id ? (
+                            <CircularProgress size={16} />
+                          ) : (
+                            <DownloadIcon />
+                          )
+                        }
+                        onClick={() =>
+                          handleDownload({
+                            ...currentVersion,
+                            download_url: datosActuales?.download_url,
+                          })
+                        }
+                        sx={{ borderRadius: 2, textTransform: "none" }}
+                      >
+                        Descargar Excel vigente
+                      </Button>
+                      <StatusChip status={currentVersion.status} />
+                    </Box>
+                  )}
+                </Box>
+
+                {currentVersion && (
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 2,
+                      mb: 2,
+                      borderRadius: 3,
+                      bgcolor: alpha(theme.palette.grey[500], 0.06),
+                    }}
+                  >
                     <Grid container spacing={2}>
-                      <Grid item xs={6} md={2}>
-                        <InfoItem label="Tamaño">
-                          {formatBytes(selectedVersion.file_size)}
-                        </InfoItem>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <MetaItem
+                          icon={
+                            <InsertDriveFileOutlinedIcon fontSize="small" />
+                          }
+                          label="Archivo origen"
+                        >
+                          {currentVersion.original_filename}
+                        </MetaItem>
                       </Grid>
-                      <Grid item xs={12} md={5}>
-                        <InfoItem label="Hash del archivo">
-                          <Tooltip title="Identifica el archivo de forma única">
+                      <Grid item xs={6} sm={3} md={2}>
+                        <MetaItem
+                          icon={<LayersOutlinedIcon fontSize="small" />}
+                          label="Versión"
+                        >
+                          v{currentVersion.version_number}
+                        </MetaItem>
+                      </Grid>
+                      <Grid item xs={6} sm={3} md={3}>
+                        <MetaItem
+                          icon={<PersonOutlineIcon fontSize="small" />}
+                          label="Importado por"
+                        >
+                          {currentVersion.imported_by?.name ?? "—"}
+                        </MetaItem>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={3}>
+                        <MetaItem
+                          icon={<ScheduleOutlinedIcon fontSize="small" />}
+                          label="Fecha de importación"
+                        >
+                          {formatDate(currentVersion.imported_at)}
+                        </MetaItem>
+                      </Grid>
+                    </Grid>
+                  </Paper>
+                )}
+
+                {errorDatos ? (
+                  <Alert
+                    severity="error"
+                    action={
+                      <Button
+                        color="inherit"
+                        size="small"
+                        onClick={() => setDatosTick((tick) => tick + 1)}
+                      >
+                        Reintentar
+                      </Button>
+                    }
+                  >
+                    {errorDatos}
+                  </Alert>
+                ) : !loadingDatos && rows.length === 0 ? (
+                  <EmptyState
+                    title="No hay datos para mostrar"
+                    description={
+                      !currentVersion
+                        ? "Todavía no hay una versión vigente. Cuando se complete una importación, sus registros aparecerán aquí."
+                        : currentVersion.status !== "completed"
+                          ? "La versión vigente no está completada. Revisa el historial de cargas."
+                          : "La fuente todavía no contiene registros, o la consulta no devolvió filas."
+                    }
+                    action={
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<HistoryOutlinedIcon />}
+                        onClick={() => setTab(1)}
+                        sx={{ mt: 1, borderRadius: 2 }}
+                      >
+                        Ver historial de cargas
+                      </Button>
+                    }
+                  />
+                ) : (
+                  <Box sx={{ width: "100%", height: isMobile ? 440 : 580 }}>
+                    <DataGrid
+                      rows={rows}
+                      columns={columns}
+                      loading={loadingDatos}
+                      getRowId={(row) => row.id}
+                      getRowClassName={(params) =>
+                        params.indexRelativeToCurrentPage % 2 === 1
+                          ? "zebra"
+                          : ""
+                      }
+                      rowCount={pagination.total ?? 0}
+                      paginationMode="server"
+                      paginationModel={paginationModel}
+                      onPaginationModelChange={setPaginationModel}
+                      pageSizeOptions={[25, 50, 100]}
+                      // El orden y los filtros del grid solo actuarían sobre la
+                      // página cargada; se desactivan para no inducir a error.
+                      disableColumnSorting
+                      disableColumnFilter
+                      disableRowSelectionOnClick
+                      slots={{ toolbar: GridToolbar }}
+                      slotProps={{
+                        toolbar: {
+                          showQuickFilter: false,
+                          csvOptions: { disableToolbarButton: true },
+                          printOptions: { disableToolbarButton: true },
+                        },
+                      }}
+                      initialState={{
+                        columns: { columnVisibilityModel: HIDDEN_BY_DEFAULT },
+                      }}
+                      localeText={
+                        esES.components.MuiDataGrid.defaultProps.localeText
+                      }
+                      sx={gridSx}
+                    />
+                  </Box>
+                )}
+              </Box>
+            )}
+
+            {/* Pestaña 2: historial de versiones/importaciones */}
+            {tab === 1 && (
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  Historial de importaciones
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 2 }}
+                >
+                  Selecciona una fila para ver el detalle y los errores de cada
+                  intento. El historial muestra metadatos de las versiones, no
+                  sus filas históricas.
+                </Typography>
+
+                {errorVersiones ? (
+                  <Alert
+                    severity="error"
+                    action={
+                      <Button
+                        color="inherit"
+                        size="small"
+                        onClick={() => loadVersiones()}
+                      >
+                        Reintentar
+                      </Button>
+                    }
+                  >
+                    {errorVersiones}
+                  </Alert>
+                ) : loadingVersiones ? (
+                  <Skeleton
+                    variant="rounded"
+                    height={320}
+                    sx={{ borderRadius: 3 }}
+                  />
+                ) : versiones.length === 0 ? (
+                  <EmptyState
+                    title="Todavía no hay versiones"
+                    description="Cuando importes un archivo, sus intentos aparecerán aquí."
+                  />
+                ) : (
+                  <>
+                    <Box sx={{ width: "100%", height: isMobile ? 460 : 500 }}>
+                      <DataGrid
+                        rows={historyRows}
+                        columns={historyColumns}
+                        getRowId={(row) => row.id}
+                        pageSizeOptions={[10, 25, 50]}
+                        columnVisibilityModel={{
+                          imported_by_name: !isMobile,
+                        }}
+                        initialState={{
+                          pagination: {
+                            paginationModel: { pageSize: 10, page: 0 },
+                          },
+                          sorting: {
+                            sortModel: [
+                              { field: "version_number", sort: "desc" },
+                            ],
+                          },
+                        }}
+                        onRowClick={(params) =>
+                          setSelectedVersionId(params.row.id)
+                        }
+                        getRowClassName={(params) =>
+                          [
+                            params.id === selectedVersionId
+                              ? "selected-row"
+                              : "",
+                            params.indexRelativeToCurrentPage % 2 === 1
+                              ? "zebra"
+                              : "",
+                          ]
+                            .join(" ")
+                            .trim()
+                        }
+                        disableRowSelectionOnClick
+                        localeText={
+                          esES.components.MuiDataGrid.defaultProps.localeText
+                        }
+                        sx={{
+                          ...gridSx,
+                          "& .MuiDataGrid-row": { cursor: "pointer" },
+                          "& .selected-row, & .selected-row:hover": {
+                            backgroundColor: alpha(
+                              theme.palette.primary.main,
+                              0.12,
+                            ),
+                          },
+                        }}
+                      />
+                    </Box>
+
+                    {selectedVersion && (
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          mt: 2,
+                          p: 2.5,
+                          border: "1px solid",
+                          borderColor: "divider",
+                          borderLeft: "4px solid",
+                          borderLeftColor: `${statusColor(selectedVersion.status)}.main`,
+                          borderRadius: 3,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            flexWrap: "wrap",
+                            gap: 1,
+                            mb: 2,
+                          }}
+                        >
+                          <Typography variant="subtitle1" fontWeight={700}>
+                            Detalle de la versión v
+                            {selectedVersion.version_number}
+                          </Typography>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              gap: 1,
+                              alignItems: "center",
+                            }}
+                          >
+                            <StatusChip status={selectedVersion.status} />
+                            {selectedVersion.is_current && (
+                              <Chip
+                                label="Vigente"
+                                color="primary"
+                                size="small"
+                              />
+                            )}
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              disabled={downloadingId === selectedVersion.id}
+                              startIcon={
+                                downloadingId === selectedVersion.id ? (
+                                  <CircularProgress size={16} />
+                                ) : (
+                                  <DownloadIcon />
+                                )
+                              }
+                              onClick={() => handleDownload(selectedVersion)}
+                              sx={{ borderRadius: 2, textTransform: "none" }}
+                            >
+                              Descargar archivo
+                            </Button>
+                          </Box>
+                        </Box>
+
+                        <Grid container spacing={2}>
+                          <Grid item xs={12} sm={6} md={4}>
+                            <MetaItem
+                              icon={
+                                <InsertDriveFileOutlinedIcon fontSize="small" />
+                              }
+                              label="Archivo"
+                            >
+                              {selectedVersion.original_filename}
+                            </MetaItem>
+                          </Grid>
+                          <Grid item xs={6} sm={3} md={2}>
+                            <MetaItem
+                              icon={<TableRowsOutlinedIcon fontSize="small" />}
+                              label="Filas importadas"
+                            >
+                              {formatNumber(selectedVersion.total_rows)}
+                            </MetaItem>
+                          </Grid>
+                          <Grid item xs={6} sm={3} md={3}>
+                            <MetaItem
+                              icon={<PersonOutlineIcon fontSize="small" />}
+                              label="Importado por"
+                            >
+                              {selectedVersion.imported_by?.name ?? "—"}
+                            </MetaItem>
+                          </Grid>
+                          <Grid item xs={12} sm={6} md={3}>
+                            <MetaItem
+                              icon={<ScheduleOutlinedIcon fontSize="small" />}
+                              label={
+                                selectedVersion.status === "failed"
+                                  ? "Fecha del intento"
+                                  : "Fecha de importación"
+                              }
+                            >
+                              {formatDate(
+                                selectedVersion.imported_at ??
+                                  selectedVersion.created_at,
+                              )}
+                            </MetaItem>
+                          </Grid>
+                        </Grid>
+
+                        {selectedVersion.error_message && (
+                          <Alert
+                            severity="error"
+                            sx={{ mt: 2 }}
+                            action={
+                              <Button
+                                color="inherit"
+                                size="small"
+                                startIcon={<ContentCopyIcon />}
+                                onClick={handleCopyError}
+                              >
+                                {copied ? "Copiado" : "Copiar"}
+                              </Button>
+                            }
+                          >
+                            <AlertTitle>Detalle del error</AlertTitle>
                             <Box
-                              component="span"
+                              component="pre"
                               sx={{
+                                m: 0,
+                                maxHeight: 180,
+                                overflow: "auto",
+                                whiteSpace: "pre-wrap",
+                                wordBreak: "break-word",
                                 fontFamily: "monospace",
                                 fontSize: "0.8rem",
                               }}
                             >
-                              {selectedVersion.file_hash}
+                              {selectedVersion.error_message}
                             </Box>
-                          </Tooltip>
-                        </InfoItem>
-                      </Grid>
-                      <Grid item xs={12} md={5}>
-                        <InfoItem label="Ruta almacenada">
-                          <Box
-                            component="span"
-                            sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}
-                          >
-                            {selectedVersion.file_path}
-                          </Box>
-                        </InfoItem>
-                      </Grid>
-                    </Grid>
-                  </AccordionDetails>
-                </Accordion>
-              </>
-            )}
-          </Paper>
+                          </Alert>
+                        )}
 
-          {/* Data de la versión seleccionada */}
-          <Paper
-            elevation={0}
-            sx={{ p: 3, borderRadius: 4, border: "1px solid #000000" }}
-          >
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Datos de la versión{" "}
-              {selectedVersion ? `v${selectedVersion.version_number}` : ""}
-            </Typography>
-            {rows.length > 0 && (
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                {rows.length.toLocaleString("es-MX")} registros. Usa el buscador
-                y los filtros para explorar; en "Columnas" puedes mostrar u
-                ocultar campos.
-              </Typography>
-            )}
-
-            {rows.length === 0 ? (
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 1,
-                  py: 6,
-                  color: "text.secondary",
-                  textAlign: "center",
-                }}
-              >
-                <InboxOutlinedIcon sx={{ fontSize: 48 }} />
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                  {isFailed
-                    ? "No hay datos porque esta carga falló"
-                    : isInProgress
-                      ? "Los datos aparecerán cuando termine el procesamiento"
-                      : "Esta versión no tiene registros"}
-                </Typography>
-                {isFailed && currentVersion && !isSelectedCurrent && (
-                  <Button
-                    variant="outlined"
-                    sx={{ mt: 1, borderRadius: 3 }}
-                    onClick={() => setSelectedVersionId(currentVersion.id)}
-                  >
-                    Ver datos de la versión vigente (v
-                    {currentVersion.version_number})
-                  </Button>
+                        {selectedVersion.is_current !== true &&
+                          selectedVersion.status === "completed" && (
+                            <Alert
+                              severity="info"
+                              sx={{ mt: 2 }}
+                              action={
+                                <Button
+                                  color="inherit"
+                                  size="small"
+                                  onClick={() => setTab(0)}
+                                >
+                                  Ver datos actuales
+                                </Button>
+                              }
+                            >
+                              Esta es una versión anterior. La tabla de datos
+                              actuales muestra el conjunto vigente, no una
+                              reconstrucción de las filas de esta versión.
+                            </Alert>
+                          )}
+                      </Paper>
+                    )}
+                  </>
                 )}
-              </Box>
-            ) : (
-              <Box sx={{ width: "100%", height: isMobile ? 400 : 520 }}>
-                <DataGrid
-                  rows={rows}
-                  columns={columns}
-                  slots={{ toolbar: GridToolbar }}
-                  slotProps={{ toolbar: { showQuickFilter: true } }}
-                  disableRowSelectionOnClick
-                  pageSizeOptions={[10, 25, 50, 100]}
-                  initialState={{
-                    pagination: { paginationModel: { pageSize: 25, page: 0 } },
-                    columns: { columnVisibilityModel: HIDDEN_BY_DEFAULT },
-                  }}
-                  localeText={
-                    esES.components.MuiDataGrid.defaultProps.localeText
-                  }
-                  sx={{
-                    border: "none",
-                    "& .MuiDataGrid-columnHeaders": {
-                      backgroundColor: theme.palette.grey[100],
-                      fontWeight: 700,
-                      fontSize: "0.85rem",
-                      borderBottom: `2px solid ${theme.palette.primary.main}`,
-                    },
-                    "& .MuiDataGrid-footerContainer": {
-                      borderTop: `2px solid ${theme.palette.primary.main}`,
-                    },
-                    "& .MuiDataGrid-cell": {
-                      borderBottom: `1px solid ${theme.palette.divider}`,
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    },
-                    "& .MuiDataGrid-row:hover": {
-                      backgroundColor: theme.palette.action.hover,
-                      transition: "0.2s ease-in-out",
-                    },
-                  }}
-                />
               </Box>
             )}
           </Paper>
         </Box>
-      </Grid>
+      </Box>
     </Layout>
   );
 };
