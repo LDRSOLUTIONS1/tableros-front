@@ -1,4 +1,4 @@
-import React, { useReducer } from "react";
+import React, { useReducer, useRef } from "react";
 import ImportacionesContext from "./ImportacionesContext";
 import ImportacionesReducer from "./ImportacionesReducer";
 import MethodGet, { MethodPost, MethodPut } from "../../Config/Service";
@@ -21,6 +21,8 @@ const ImportacionesState = ({ children }) => {
   };
 
   const [state, dispatch] = useReducer(ImportacionesReducer, initialState);
+
+  const importacionEnCurso = useRef(false);
 
   const handleError = (error) => {
     if (!error.response) {
@@ -100,50 +102,62 @@ const ImportacionesState = ({ children }) => {
       .catch(handleError);
   };
 
-  const AddFile = ({ archivo, id_importacion }) => {
+  const AddFile = async ({ archivo, id_importacion }) => {
+    if (importacionEnCurso.current) {
+      return false;
+    }
+
     if (!archivo || !id_importacion) {
       Swal.fire({
         title: "Datos incompletos",
         text: "Selecciona un archivo Excel válido.",
         icon: "warning",
       });
-      return Promise.resolve(false);
+
+      return false;
     }
+
+    importacionEnCurso.current = true;
 
     const formData = new FormData();
     formData.append("archivo", archivo);
 
-    return MethodPost(
-      `/importaciones/${id_importacion}/subir`,
-      formData,
-      imageHeaders,
-    )
-      .then((res) => {
-        const { message, errores } = res.data || {};
+    try {
+      const res = await MethodPost(
+        `/importaciones/${id_importacion}/subir`,
+        formData,
+        imageHeaders,
+      );
 
-        if (Array.isArray(errores) && errores.length > 0) {
-          Swal.fire({
-            title: "Importación con advertencias",
-            text: `${message || "La importación finalizó con advertencias."}\n\n${errores
-              .map((e) => (typeof e === "string" ? e : JSON.stringify(e)))
-              .join("\n")}`,
-            icon: "warning",
-          });
-        } else {
-          Swal.fire({
-            title: "Éxito",
-            text: message || "El archivo se procesó correctamente.",
-            icon: "success",
-          });
-        }
+      const { message, errores } = res.data || {};
 
-        GetImportaciones();
-        return true;
-      })
-      .catch((error) => {
-        handleError(error);
-        return false;
-      });
+      if (Array.isArray(errores) && errores.length > 0) {
+        Swal.fire({
+          title: "Importación con advertencias",
+          text: `${
+            message || "La importación finalizó con advertencias."
+          }\n\n${errores
+            .map((e) => (typeof e === "string" ? e : JSON.stringify(e)))
+            .join("\n")}`,
+          icon: "warning",
+        });
+      } else {
+        Swal.fire({
+          title: "Éxito",
+          text: message || "El archivo se procesó correctamente.",
+          icon: "success",
+        });
+      }
+
+      GetImportaciones();
+
+      return true;
+    } catch (error) {
+      handleError(error);
+      return false;
+    } finally {
+      importacionEnCurso.current = false;
+    }
   };
 
   return (

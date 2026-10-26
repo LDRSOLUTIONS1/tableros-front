@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useContext, useState } from "react";
+import { useContext, useState, useRef } from "react";
 import * as XLSX from "xlsx";
 import { useForm } from "react-hook-form";
 import {
@@ -31,6 +31,9 @@ export default function AddFileExcel({ open, handleClose, id }) {
   const [nombreHoja, setNombreHoja] = useState("");
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
+
+  const [importando, setImportando] = useState(false);
+  const enviandoRef = useRef(false);
 
   const limpiarFormulario = () => {
     setArchivo(null);
@@ -157,11 +160,15 @@ export default function AddFileExcel({ open, handleClose, id }) {
   };
 
   const onSubmit = async () => {
+    if (enviandoRef.current) return;
+
     if (!archivo || columnas.length === 0) {
       setError("Selecciona un archivo Excel válido.");
       return;
     }
 
+    enviandoRef.current = true;
+    setImportando(true);
     setError("");
 
     try {
@@ -175,13 +182,20 @@ export default function AddFileExcel({ open, handleClose, id }) {
       }
     } catch (err) {
       setError(err.message || "No fue posible importar el archivo.");
+    } finally {
+      enviandoRef.current = false;
+      setImportando(false);
     }
   };
 
   return (
     <Dialog
       open={open}
-      onClose={cerrarModal}
+      onClose={() => {
+        if (!importando) {
+          cerrarModal();
+        }
+      }}
       fullWidth
       maxWidth="xl"
       disableEnforceFocus
@@ -228,7 +242,7 @@ export default function AddFileExcel({ open, handleClose, id }) {
                   component="label"
                   variant="contained"
                   startIcon={<CloudUploadIcon />}
-                  disabled={cargando}
+                  disabled={cargando || importando}
                 >
                   Seleccionar archivo
                   <input
@@ -411,24 +425,38 @@ export default function AddFileExcel({ open, handleClose, id }) {
 
         <DialogActions>
           <Button
-            onClick={handleClose}
+            onClick={cerrarModal}
+            disabled={importando}
             sx={{
               backgroundColor: "red",
               color: "white",
-              "&:hover": { backgroundColor: "darkred" },
+              "&:hover": {
+                backgroundColor: "darkred",
+              },
             }}
           >
             Cancelar
           </Button>
           <Button
             type="submit"
+            variant="contained"
+            disabled={cargando || importando || !archivo}
+            startIcon={
+              importando ? <CircularProgress size={18} color="inherit" /> : null
+            }
             sx={{
               backgroundColor: "#1565c0",
               color: "white",
-              "&:hover": { backgroundColor: "#0d47a1" },
+              "&:hover": {
+                backgroundColor: "#0d47a1",
+              },
+              "&.Mui-disabled": {
+                backgroundColor: "action.disabledBackground",
+                color: "text.disabled",
+              },
             }}
           >
-            Importar Excel
+            {importando ? "Importando Excel..." : "Importar Excel"}
           </Button>
         </DialogActions>
       </form>
