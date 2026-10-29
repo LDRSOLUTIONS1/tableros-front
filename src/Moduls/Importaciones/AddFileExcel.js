@@ -20,7 +20,13 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import ImportacionesContext from "../../Context/Importaciones/ImportacionesContext";
 
-export default function AddFileExcel({ open, handleClose, id }) {
+export default function AddFileExcel({
+  open,
+  handleClose,
+  id,
+  codigo,
+  nombre,
+}) {
   const { AddFile } = useContext(ImportacionesContext);
 
   const { handleSubmit, reset } = useForm();
@@ -200,7 +206,9 @@ export default function AddFileExcel({ open, handleClose, id }) {
       maxWidth="xl"
       disableEnforceFocus
     >
-      <DialogTitle>Nueva importación de Excel</DialogTitle>
+      <DialogTitle>
+        Nueva importación de {nombre} ({codigo})
+      </DialogTitle>
 
       <form
         onSubmit={handleSubmit(onSubmit)}

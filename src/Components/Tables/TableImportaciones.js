@@ -43,15 +43,25 @@ export default function TableImportaciones({ rows = [] }) {
 
   const [modalFile, setOpenModalFile] = useState(false);
   const [id_importacion_file, saveIdImportacionFile] = useState(null);
-  const handleClickOpenFile = (id) => {
+  const handleClickOpenFile = (row) => {
     setOpenModalFile(true);
-    saveIdImportacionFile(id);
+    saveIdImportacionFile(row.id);
+
+    setImportacionSeleccionada({
+      codigo: row.codigo,
+      nombre: row.nombre,
+    });
   };
 
   const handleClickCloseFile = () => {
     setOpenModalFile(false);
     saveIdImportacionFile(null);
   };
+
+  const [importacionSeleccionada, setImportacionSeleccionada] = useState({
+    codigo: "",
+    nombre: "",
+  });
 
   const columns = [
     {
@@ -76,7 +86,7 @@ export default function TableImportaciones({ rows = [] }) {
             <GridActionsCellItem
               icon={<FileUploadIcon sx={{ color: "#4ced02" }} />}
               label="Importar Excel"
-              onClick={() => handleClickOpenFile(params.id)}
+              onClick={() => handleClickOpenFile(params.row)}
             />,
           );
         }
@@ -180,7 +190,7 @@ export default function TableImportaciones({ rows = [] }) {
             pageSizeOptions={[5, 10, 20, 50, 100]}
             initialState={{
               pagination: {
-                paginationModel: { pageSize: 10, page: 0 },
+                paginationModel: { pageSize: 20, page: 0 },
               },
               sorting: {
                 sortModel: [{ field: "id", sort: "desc" }],
@@ -272,6 +282,8 @@ export default function TableImportaciones({ rows = [] }) {
           open={modalFile}
           handleClose={handleClickCloseFile}
           id={id_importacion_file}
+          codigo={importacionSeleccionada.codigo}
+          nombre={importacionSeleccionada.nombre}
         />
       )}
     </>
