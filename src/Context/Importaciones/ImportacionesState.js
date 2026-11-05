@@ -1,7 +1,11 @@
 import React, { useReducer, useRef } from "react";
 import ImportacionesContext from "./ImportacionesContext";
 import ImportacionesReducer from "./ImportacionesReducer";
-import MethodGet, { MethodPost, MethodPut } from "../../Config/Service";
+import MethodGet, {
+  MethodPost,
+  MethodPut,
+  MethodGetPDF,
+} from "../../Config/Service";
 import Swal from "sweetalert2";
 import {
   GET_IMPORTACIONES,
@@ -160,6 +164,60 @@ const ImportacionesState = ({ children }) => {
     }
   };
 
+  const handleClickDownload = async (sourceId, codigo) => {
+    try {
+      const response = await MethodGetPDF(
+        `/importaciones/${sourceId}/layout`,
+        {},
+        {
+          responseType: "blob",
+        },
+      );
+
+      const blob = response.data;
+
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = `${codigo || sourceId}-layout.xlsx`;
+
+      document.body.appendChild(link);
+      link.click();
+
+      link.remove();
+
+      window.setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+      }, 1000);
+    } catch (error) {
+      console.error("Error descargando layout:", error);
+
+      if (error.response?.data instanceof Blob) {
+        const errorData = await error.response.data.text();
+
+        try {
+          const json = JSON.parse(errorData);
+
+          Swal.fire(
+            "Error",
+            json.message || "No fue posible descargar el layout.",
+            "error",
+          );
+        } catch {
+          Swal.fire(
+            "Error",
+            "No fue posible generar el archivo Excel.",
+            "error",
+          );
+        }
+      } else {
+        handleError(error);
+      }
+    }
+  };
+
   return (
     <ImportacionesContext.Provider
       value={{
@@ -172,6 +230,7 @@ const ImportacionesState = ({ children }) => {
         CreateImportaciones,
         EditImportaciones,
         AddFile,
+        handleClickDownload,
       }}
     >
       {children}

@@ -1,6 +1,6 @@
 import React, { useContext, useState } from "react";
 import { Box, Typography, Paper, useTheme, useMediaQuery } from "@mui/material";
-import VisibilityIcon from "@mui/icons-material/Visibility";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
 import EditIcon from "@mui/icons-material/Edit";
 import { dateFormatter } from "../../Utils/dateFormatter";
@@ -14,12 +14,14 @@ import FileUploadIcon from "@mui/icons-material/FileUpload";
 import AddFileExcel from "../../Moduls/Importaciones/AddFileExcel";
 import { useNavigate } from "react-router-dom";
 import ViewListIcon from "@mui/icons-material/ViewList";
+import ImportacionesContext from "../../Context/Importaciones/ImportacionesContext";
 
 export default function TableImportaciones({ rows = [] }) {
   const theme = useTheme();
   const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const role_id = localStorage.getItem("role_id");
+  const { handleClickDownload } = useContext(ImportacionesContext);
 
   const [modalUpdate, OpenModalUpdate] = useState(false);
   const [id_importacion, saveIdImportacion] = useState(null);
@@ -70,7 +72,7 @@ export default function TableImportaciones({ rows = [] }) {
       flex: 1,
       align: "center",
       headerAlign: "center",
-      minWidth: 100,
+      minWidth: 150,
       type: "actions",
       getActions: (params) => {
         const actions = [
@@ -80,6 +82,16 @@ export default function TableImportaciones({ rows = [] }) {
             onClick={() => handleClickOpenEdit(params.id)}
           />,
         ];
+
+        if (role_id !== "5") {
+          actions.push(
+            <GridActionsCellItem
+              icon={<FileDownloadIcon sx={{ color: "#1b04ec" }} />}
+              label="Descargar Excel"
+              onClick={() => handleClickDownload(params.id)}
+            />,
+          );
+        }
 
         if (role_id !== "5") {
           actions.push(
