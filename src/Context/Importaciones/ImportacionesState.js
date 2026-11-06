@@ -9,6 +9,7 @@ import MethodGet, {
 import Swal from "sweetalert2";
 import {
   GET_IMPORTACIONES,
+  GET_IMPORTACIONES_POR_TABLERO,
   ADD_IMPORTACIONES,
   SHOW_IMPORTACIONES,
   EDIT_IMPORTACIONES,
@@ -19,6 +20,7 @@ import Appcss from "../../App.css";
 const ImportacionesState = ({ children }) => {
   const initialState = {
     importaciones: [],
+    tablerosImportaciones: [],
     importacion: null,
     ErrorsApi: [],
     success: false,
@@ -65,6 +67,22 @@ const ImportacionesState = ({ children }) => {
         });
       })
       .catch(handleError);
+  };
+
+  const GetImportacionesPorTablero = async () => {
+    try {
+      const res = await MethodGet("/importacionesPorTablero");
+
+      dispatch({
+        type: GET_IMPORTACIONES_POR_TABLERO,
+        payload: res.data,
+      });
+
+      return true;
+    } catch (error) {
+      handleError(error);
+      return false;
+    }
   };
 
   const GetImportacion = (id) => {
@@ -154,6 +172,7 @@ const ImportacionesState = ({ children }) => {
       }
 
       GetImportaciones();
+      await GetImportacionesPorTablero();
 
       return true;
     } catch (error) {
@@ -222,10 +241,12 @@ const ImportacionesState = ({ children }) => {
     <ImportacionesContext.Provider
       value={{
         importaciones: state.importaciones,
+        tablerosImportaciones: state.tablerosImportaciones,
         importacion: state.importacion,
         ErrorsApi: state.ErrorsApi,
         success: state.success,
         GetImportaciones,
+        GetImportacionesPorTablero,
         GetImportacion,
         CreateImportaciones,
         EditImportaciones,

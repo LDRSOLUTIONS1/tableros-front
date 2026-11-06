@@ -1,4 +1,8 @@
-import { GET_IMPORTACIONES, SHOW_IMPORTACIONES } from "../../Types/Index";
+import {
+  GET_IMPORTACIONES,
+  GET_IMPORTACIONES_POR_TABLERO,
+  SHOW_IMPORTACIONES,
+} from "../../Types/Index";
 
 const ImportacionesReducer = (state, action) => {
   switch (action.type) {
@@ -8,6 +12,11 @@ const ImportacionesReducer = (state, action) => {
         importaciones: action.payload,
         success: false,
         ErrorsApi: [],
+      };
+    case GET_IMPORTACIONES_POR_TABLERO:
+      return {
+        ...state,
+        tablerosImportaciones: action.payload,
       };
     case SHOW_IMPORTACIONES:
       return {

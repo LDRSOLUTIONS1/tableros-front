@@ -14,10 +14,13 @@ import { EstadoChip } from "../../Utils/EstadoChip";
 import { esES } from "@mui/x-data-grid/locales";
 import CategoríasContext from "../../Context/Categorías/CategoríasContext";
 import ModalTablero from "../Modals/ModalTablero";
+import { useNavigate } from "react-router-dom";
+import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 
 export default function TableTableros({ rows = [] }) {
   const { tablero, GetTablero } = useContext(TablerosContext);
   const theme = useTheme();
+  const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [openModal, setOpenModal] = useState(false);
   const { categorias, GetCategorias } = useContext(CategoríasContext);
@@ -87,6 +90,11 @@ export default function TableTableros({ rows = [] }) {
             icon={<EditIcon sx={{ color: "#ed6c02" }} />}
             label="Editar"
             onClick={() => handleClickOpenEdit(params.id)}
+          />,
+          <GridActionsCellItem
+            icon={<FolderOpenIcon sx={{ color: "#42b3f5" }} />}
+            label="Ver importaciones de Excel"
+            onClick={() => navigate(`/Importaciones?tablero_id=${params.id}`)}
           />,
         ];
         return actions;

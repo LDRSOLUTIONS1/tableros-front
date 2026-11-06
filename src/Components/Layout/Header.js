@@ -42,16 +42,16 @@ const MODULOS = [
     icon: <TableRowsIcon />,
   },
   {
-    id: 7,
-    segment: "Administracion",
-    title: "Administración de tableros",
-    icon: <SecurityIcon />,
-  },
-  {
     id: 8,
     segment: "Importaciones",
     title: "Importaciones",
     icon: <FileUploadIcon />,
+  },
+  {
+    id: 7,
+    segment: "Administracion",
+    title: "Administración de tableros",
+    icon: <SecurityIcon />,
   },
   {
     id: 4,
@@ -151,6 +151,6 @@ export default function Header({ children }) {
       <DashboardLayout defaultSidebarCollapsed initialExpandedItems={[]}>
         {children}
       </DashboardLayout>
-    </AppProvider>  
+    </AppProvider>
   );
 }
