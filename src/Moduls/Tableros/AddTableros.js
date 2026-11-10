@@ -79,7 +79,7 @@ export default function AddTableros({ open, handleClose, categorias }) {
                 fullWidth
                 label="Descripcion"
                 {...register("descripcion", {
-                  maxLength: { value: 100, message: "Máximo 100 caracteres" },
+                  maxLength: { value: 250, message: "Máximo 250 caracteres" },
                 })}
                 error={!!errors.descripcion}
                 helperText={errors.descripcion?.message}

@@ -144,8 +144,8 @@ export default function EditTableros({ open, handleClose, id, categorias }) {
                 InputLabelProps={{ shrink: true }}
                 {...register("descripcion", {
                   maxLength: {
-                    value: 100,
-                    message: "Máximo 100 caracteres",
+                    value: 250,
+                    message: "Máximo 250 caracteres",
                   },
                 })}
                 error={!!errors.descripcion}

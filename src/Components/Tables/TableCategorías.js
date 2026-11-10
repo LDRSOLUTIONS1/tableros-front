@@ -53,10 +53,10 @@ export default function TableCategorías({ rows = [] }) {
     {
       field: "actions",
       headerName: "Acciones",
-      flex: 0.5,
+      flex: 1,
       align: "center",
       headerAlign: "center",
-      minWidth: 50,
+      minWidth: 150,
       type: "actions",
       getActions: (params) => {
         const actions = [
