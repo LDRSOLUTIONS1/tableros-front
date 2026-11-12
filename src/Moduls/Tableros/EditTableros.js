@@ -140,7 +140,7 @@ export default function EditTableros({ open, handleClose, id, categorias }) {
             <Grid size={12}>
               <TextField
                 fullWidth
-                label="Descripcion"
+                label="Descripción"
                 InputLabelProps={{ shrink: true }}
                 {...register("descripcion", {
                   maxLength: {

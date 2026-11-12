@@ -173,7 +173,7 @@ export default function TableCategorías({ rows = [] }) {
                       onClick={handleClickOpenAdd}
                       sx={{ borderRadius: 3 }}
                     >
-                      Nuevo categoría
+                      Nueva categoría
                     </Button>
                   )}
                 </Box>

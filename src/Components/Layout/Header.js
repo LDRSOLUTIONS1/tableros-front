@@ -14,6 +14,7 @@ import HistoryIcon from "@mui/icons-material/History";
 import CategoryIcon from "@mui/icons-material/Category";
 import TableRowsIcon from "@mui/icons-material/TableRows";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
+import ArticleIcon from "@mui/icons-material/Article";
 
 const theme = createTheme({
   cssVariables: {
@@ -41,6 +42,13 @@ const MODULOS = [
     title: "Tableros",
     icon: <TableRowsIcon />,
   },
+  {
+    id: 9,
+    segment: "AdministracionPaginas",
+    title: "Administración de páginas",
+    icon: <ArticleIcon />,
+  },
+
   {
     id: 8,
     segment: "Importaciones",
@@ -130,11 +138,11 @@ export default function Header({ children }) {
         title: "Regresar a la intranet",
         icon: <KeyboardReturnIcon />,
       },
-      {
-        segment: "manual-usuario",
-        title: "Manual de usuario",
-        icon: <DescriptionIcon />,
-      },
+      // {
+      //   segment: "manual-usuario",
+      //   title: "Manual de usuario",
+      //   icon: <DescriptionIcon />,
+      // },
     ];
   }, [role_id]);
 

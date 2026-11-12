@@ -77,7 +77,7 @@ export default function AddTableros({ open, handleClose, categorias }) {
             <Grid size={12}>
               <TextField
                 fullWidth
-                label="Descripcion"
+                label="Descripción"
                 {...register("descripcion", {
                   maxLength: { value: 250, message: "Máximo 250 caracteres" },
                 })}

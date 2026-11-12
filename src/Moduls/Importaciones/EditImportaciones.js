@@ -118,7 +118,7 @@ export default function EditImportaciones({ open, handleClose, id }) {
             <Grid size={12}>
               <TextField
                 fullWidth
-                label="Descripcion"
+                label="Descripción"
                 InputLabelProps={{ shrink: true }}
                 {...register("descripcion", {
                   maxLength: { value: 500, message: "Máximo 500 caracteres" },

@@ -7,6 +7,7 @@ import LogsState from "./Context/Logs/LogsState";
 import CategoríasState from "./Context/Categorías/CategoríasState";
 import TablerosState from "./Context/Tableros/TablerosState";
 import ImportacionesState from "./Context/Importaciones/ImportacionesState";
+import AdministraciónPaginasState from "./Context/AdministraciónPaginas/AdministraciónPaginasState";
 
 const AdminApp = () => {
   return (
@@ -17,7 +18,9 @@ const AdminApp = () => {
             <CategoríasState>
               <TablerosState>
                 <ImportacionesState>
-                  <AppRouter />
+                  <AdministraciónPaginasState>
+                    <AppRouter />
+                  </AdministraciónPaginasState>
                 </ImportacionesState>
               </TablerosState>
             </CategoríasState>

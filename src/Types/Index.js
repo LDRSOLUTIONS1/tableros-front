@@ -40,6 +40,12 @@ export const ADD_IMPORTACIONES = "ADD_IMPORTACIONES";
 export const SHOW_IMPORTACIONES = "SHOW_IMPORTACIONES";
 export const EDIT_IMPORTACIONES = "EDIT_IMPORTACIONES";
 
+//Administración de páginas
+export const GET_PAGINAS = "GET_PAGINAS";
+export const ADD_PAGINAS = "ADD_PAGINAS";
+export const SHOW_PAGINAS = "SHOW_PAGINAS";
+export const EDIT_PAGINAS = "EDIT_PAGINAS";
+
 //Logs
 export const GET_LOGS = "GET_LOGS";
 export const SHOW_LOGS = "SHOW_LOGS";

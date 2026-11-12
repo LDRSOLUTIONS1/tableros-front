@@ -11,6 +11,7 @@ import Tableros from "../Moduls/Tableros/Tableros";
 import Administración from "../Moduls/Administración/Administración";
 import Importaciones from "../Moduls/Importaciones/Importaciones";
 import DetalleImportaciones from "../Moduls/Importaciones/DetalleImportaciones";
+import AdministraciónPaginas from "../Moduls/AdministraciónPaginas/AdministraciónPaginas";
 
 const SuperAdminRoutes = ()   => {
   return (
@@ -18,9 +19,10 @@ const SuperAdminRoutes = ()   => {
       <Route path="/Inicio" element={<Inicio />} />
       <Route path="/Categorias" element={<Categorías />} />
       <Route path="/Tableros" element={<Tableros />} />
-      <Route path="/Administracion" element={<Administración />} />
+      <Route path="/AdministracionPaginas" element={<AdministraciónPaginas />} />
       <Route path="/Importaciones" element={<Importaciones />} />
       <Route path="/Importaciones/:id" element={<DetalleImportaciones />} />
+      <Route path="/Administracion" element={<Administración />} />
       <Route path="/Usuarios" element={<Usuarios />} />
       <Route path="/Roles" element={<Roles />} />
       <Route path="/Logs" element={<Logs />} />
