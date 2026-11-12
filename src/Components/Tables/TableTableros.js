@@ -24,6 +24,7 @@ export default function TableTableros({ rows = [] }) {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [openModal, setOpenModal] = useState(false);
   const { categorias, GetCategorias } = useContext(CategoríasContext);
+  const role_id = localStorage.getItem("role_id");
 
   const handleClickOpen = async (id) => {
     await GetTablero(id);
@@ -86,17 +87,25 @@ export default function TableTableros({ rows = [] }) {
             label="Ver detalles"
             onClick={() => handleClickOpen(params.id)}
           />,
-          <GridActionsCellItem
-            icon={<EditIcon sx={{ color: "#ed6c02" }} />}
-            label="Editar"
-            onClick={() => handleClickOpenEdit(params.id)}
-          />,
-          <GridActionsCellItem
-            icon={<FolderOpenIcon sx={{ color: "#42b3f5" }} />}
-            label="Ver importaciones de Excel"
-            onClick={() => navigate(`/Importaciones?tablero_id=${params.id}`)}
-          />,
         ];
+        if (role_id !== "4") {
+          actions.push(
+            <GridActionsCellItem
+              icon={<EditIcon sx={{ color: "#ed6c02" }} />}
+              label="Editar"
+              onClick={() => handleClickOpenEdit(params.id)}
+            />,
+          );
+        }
+        if (role_id !== "4") {
+          actions.push(
+            <GridActionsCellItem
+              icon={<FolderOpenIcon sx={{ color: "#42b3f5" }} />}
+              label="Ver importaciones de Excel"
+              onClick={() => navigate(`/Importaciones?tablero_id=${params.id}`)}
+            />,
+          );
+        }
         return actions;
       },
     },
@@ -244,14 +253,16 @@ export default function TableTableros({ rows = [] }) {
                   }}
                 >
                   <Typography fontWeight={600}>Total: {rows.length}</Typography>
-                  <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={handleClickOpenAdd}
-                    sx={{ borderRadius: 3 }}
-                  >
-                    Nuevo tablero
-                  </Button>
+                  {role_id !== "4" && (
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={handleClickOpenAdd}
+                      sx={{ borderRadius: 3 }}
+                    >
+                      Nuevo tablero
+                    </Button>
+                  )}
                 </Box>
               ),
             }}

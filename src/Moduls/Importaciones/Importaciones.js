@@ -18,7 +18,7 @@ const Importaciones = () => {
   const [loading, setLoading] = useState(true);
 
   const role_id = localStorage.getItem("role_id");
-  const esAdministrador = ["1", "2"].includes(role_id);
+  const esAdministrador = ["1", "2", "4"].includes(role_id);
 
   useEffect(() => {
     const cargarDatos = async () => {

@@ -71,7 +71,7 @@ export default function TableImportacionesPorTablero({ rows = [] }) {
 
   // Consultor: solo consulta.
   // Ajustar de acuerdo con los permisos definitivos del backend.
-  const puedeImportar = !["4", "5"].includes(role_id);
+  const puedeImportar = !["5"].includes(role_id);
   const puedeConsultar = role_id !== "5";
 
   const tableroId = Number(searchParams.get("tablero_id")) || null;

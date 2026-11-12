@@ -21,6 +21,7 @@ export default function TablePaginas({ rows = [] }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const { tableros, GetTableros } = useContext(TablerosContext);
+  const role_id = localStorage.getItem("role_id");
 
   const [openModal, setOpenModal] = useState(false);
   const handleClickOpen = async (id) => {
@@ -84,17 +85,25 @@ export default function TablePaginas({ rows = [] }) {
             label="Ver detalles"
             onClick={() => handleClickOpen(params.id)}
           />,
-          <GridActionsCellItem
-            icon={<EditIcon sx={{ color: "#ed6c02" }} />}
-            label="Editar"
-            onClick={() => handleClickOpenEdit(params.id)}
-          />,
-          <GridActionsCellItem
-            icon={<PermDataSettingIcon sx={{ color: "#15ff00" }} />}
-            label="Configurar Excel"
-            onClick={() => handleClickOpenPermissions(params.row)}
-          />,
         ];
+        if (role_id !== "4") {
+          actions.push(
+            <GridActionsCellItem
+              icon={<EditIcon sx={{ color: "#ed6c02" }} />}
+              label="Editar"
+              onClick={() => handleClickOpenEdit(params.id)}
+            />,
+          );
+        }
+        if (role_id !== "4") {
+          actions.push(
+            <GridActionsCellItem
+              icon={<PermDataSettingIcon sx={{ color: "#15ff00" }} />}
+              label="Configurar Excel"
+              onClick={() => handleClickOpenPermissions(params.row)}
+            />,
+          );
+        }
         return actions;
       },
     },
@@ -221,14 +230,16 @@ export default function TablePaginas({ rows = [] }) {
                   }}
                 >
                   <Typography fontWeight={600}>Total: {rows.length}</Typography>
-                  <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={handleClickOpenAdd}
-                    sx={{ borderRadius: 3 }}
-                  >
-                    Nueva página
-                  </Button>
+                  {role_id !== "4" && (
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={handleClickOpenAdd}
+                      sx={{ borderRadius: 3 }}
+                    >
+                      Nueva página
+                    </Button>
+                  )}
                 </Box>
               ),
             }}

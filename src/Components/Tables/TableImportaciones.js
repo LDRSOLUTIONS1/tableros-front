@@ -13,7 +13,7 @@ import { esES } from "@mui/x-data-grid/locales";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import AddFileExcel from "../../Moduls/Importaciones/AddFileExcel";
 import { useNavigate } from "react-router-dom";
-import ViewListIcon from "@mui/icons-material/ViewList";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import ImportacionesContext from "../../Context/Importaciones/ImportacionesContext";
 
 export default function TableImportaciones({ rows = [] }) {
@@ -105,7 +105,7 @@ export default function TableImportaciones({ rows = [] }) {
         if (role_id !== "5") {
           actions.push(
             <GridActionsCellItem
-              icon={<ViewListIcon sx={{ color: "#42b3f5" }} />}
+              icon={<VisibilityIcon sx={{ color: "#42b3f5" }} />}
               label="Ver detalles"
               onClick={() => navigate(`/importaciones/${params.id}`)}
             />,
@@ -219,14 +219,14 @@ export default function TableImportaciones({ rows = [] }) {
                   }}
                 >
                   <Typography fontWeight={600}>Total: {rows.length}</Typography>
-                  {role_id !== "4" && (
+                  {role_id !== "5" && (
                     <Button
                       variant="contained"
                       startIcon={<AddIcon />}
                       onClick={handleClickOpenAdd}
                       sx={{ borderRadius: 3 }}
                     >
-                      Importar Excel
+                      Nueva fuente de Excel
                     </Button>
                   )}
                 </Box>

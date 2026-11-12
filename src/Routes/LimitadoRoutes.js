@@ -1,9 +1,10 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 
-import NoResultados from "../Components/Layout/NoResultados";
 import Inicio from "../Moduls/Inicio/Inicio";
 import Tableros from "../Moduls/Tableros/Tableros";
+
+import NoResultados from "../Components/Layout/NoResultados";
 
 const LimitadoRoutes = () => {
   return (
